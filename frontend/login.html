@@ -20,10 +20,9 @@
   --bg-white:      #ffffff;
   --success:       #16a34a;
   --error:         #dc2626;
-  --warn:          #d97706;
   --radius:        8px;
   --radius-lg:     12px;
-  --shadow-card:   0 8px 40px rgba(26,86,219,.13);
+  --shadow-card:   0 8px 40px rgba(26,86,219,.14);
   --shadow-sm:     0 2px 8px rgba(0,0,0,.06);
   --transition:    .2s cubic-bezier(.4,0,.2,1);
 }
@@ -36,31 +35,60 @@ html, body {
   overflow: hidden;
 }
 
-/* ─── BACKGROUND ─── */
+/* ─── 背景轮播 ─── */
 .bg-wrap {
   position: fixed; inset: 0; z-index: 0;
-  background: #c7d9f5;
+  background: #0f2660;
 }
-.bg-img {
+.bg-slides {
+  position: absolute; inset: 0;
+}
+.bg-slide {
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+.bg-slide.active { opacity: 1; }
+.bg-slide img {
   width: 100%; height: 100%;
   object-fit: cover;
   object-position: center 45%;
   display: block;
-  opacity: 1;
-  transition: opacity .6s;
 }
-/* Subtle blue-tinted overlay so left panel text stays readable */
+/* 深蓝色梯度蒙层 */
 .bg-overlay {
   position: absolute; inset: 0;
   background: linear-gradient(
-    105deg,
-    rgba(15,40,100,.55) 0%,
-    rgba(15,40,100,.30) 45%,
-    rgba(15,40,100,.08) 100%
+    108deg,
+    rgba(10,30,80,.70) 0%,
+    rgba(10,30,80,.45) 42%,
+    rgba(10,30,80,.12) 100%
   );
+  z-index: 1;
 }
 
-/* ─── LAYOUT ─── */
+/* 轮播小点 */
+.slide-dots {
+  position: absolute;
+  bottom: 28px; left: 52px;
+  display: flex; gap: 7px;
+  z-index: 10;
+}
+.slide-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.35);
+  cursor: pointer;
+  transition: all .3s;
+  border: none; padding: 0;
+}
+.slide-dot.active {
+  width: 20px;
+  border-radius: 3px;
+  background: rgba(255,255,255,.9);
+}
+
+/* ─── 页面布局 ─── */
 .page {
   position: relative; z-index: 1;
   height: 100vh;
@@ -68,133 +96,178 @@ html, body {
   align-items: stretch;
 }
 
-/* ─── LEFT INFO PANEL ─── */
+/* ─── 左侧品牌信息区 ─── */
 .brand-panel {
   flex: 1 1 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 52px 56px 44px;
+  padding: 48px 56px 40px;
   min-width: 0;
+  position: relative;
 }
-.brand-top { display: flex; flex-direction: column; gap: 0; }
 
+.brand-top { display: flex; flex-direction: column; }
+
+/* Logo */
 .brand-logo {
-  display: flex; align-items: center; gap: 12px;
-  margin-bottom: 64px;
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 72px;
 }
 .brand-logo-mark {
-  width: 40px; height: 40px;
+  width: 44px; height: 44px;
   background: var(--primary);
-  border-radius: 10px;
+  border-radius: 11px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(26,86,219,.35);
+  box-shadow: 0 4px 16px rgba(26,86,219,.4);
 }
-.brand-logo-mark svg { width: 22px; height: 22px; stroke: #fff; fill: none; stroke-width: 2; }
-.brand-logo-text {
-  color: #fff;
-  font-size: 16px; font-weight: 600;
-  letter-spacing: .01em;
-  text-shadow: 0 1px 4px rgba(0,0,0,.25);
+.brand-logo-mark svg { width: 24px; height: 24px; stroke: #fff; fill: none; stroke-width: 2; }
+.brand-logo-text { color: #fff; font-size: 17px; font-weight: 700; letter-spacing: .01em; text-shadow: 0 1px 6px rgba(0,0,0,.3); }
+.brand-logo-sub { color: rgba(255,255,255,.6); font-size: 11.5px; margin-top: 2px; letter-spacing: .03em; }
+
+/* 主标题区 */
+.brand-headline-wrap { margin-bottom: 22px; }
+.brand-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 20px;
+  padding: 4px 14px 4px 10px;
+  margin-bottom: 18px;
+  backdrop-filter: blur(4px);
 }
-.brand-logo-sub {
-  color: rgba(255,255,255,.65);
-  font-size: 11.5px; margin-top: 2px;
+.brand-eyebrow-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 6px #4ade80;
+  animation: pulse-green 2s infinite;
 }
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px #4ade80; }
+  50% { opacity: .6; box-shadow: 0 0 12px #4ade80; }
+}
+.brand-eyebrow span { color: rgba(255,255,255,.85); font-size: 12px; font-weight: 500; letter-spacing: .04em; }
 
 .brand-headline {
   color: #fff;
-  font-size: clamp(26px, 3vw, 42px);
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -.01em;
-  margin-bottom: 20px;
-  text-shadow: 0 2px 12px rgba(0,0,0,.3);
+  font-size: clamp(28px, 3.2vw, 46px);
+  font-weight: 800;
+  line-height: 1.18;
+  letter-spacing: -.02em;
+  text-shadow: 0 2px 16px rgba(0,0,0,.35);
 }
 .brand-headline em {
   font-style: normal;
   color: #93c5fd;
 }
-.brand-desc {
-  color: rgba(255,255,255,.75);
-  font-size: 14.5px;
-  line-height: 1.75;
-  max-width: 400px;
-  text-shadow: 0 1px 4px rgba(0,0,0,.2);
+.brand-headline .hl-accent {
+  font-style: normal;
+  background: linear-gradient(90deg, #93c5fd 0%, #60a5fa 60%, #a5f3fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
+.brand-desc {
+  color: rgba(255,255,255,.72);
+  font-size: 14.5px;
+  line-height: 1.8;
+  max-width: 420px;
+  text-shadow: 0 1px 4px rgba(0,0,0,.2);
+  margin-top: 14px;
+}
+
+/* 功能标签 */
 .brand-pills {
   display: flex; flex-wrap: wrap; gap: 8px;
-  margin-top: 36px;
+  margin-top: 32px;
 }
 .pill {
   padding: 5px 14px;
   border-radius: 20px;
   font-size: 12.5px; font-weight: 500;
-  background: rgba(255,255,255,.15);
-  color: rgba(255,255,255,.9);
-  border: 1px solid rgba(255,255,255,.25);
-  backdrop-filter: blur(4px);
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.88);
+  border: 1px solid rgba(255,255,255,.22);
+  backdrop-filter: blur(6px);
+  transition: all .2s;
+  cursor: default;
 }
+.pill:hover { background: rgba(255,255,255,.2); }
 
+/* 数据统计 */
 .brand-stats {
-  display: flex; gap: 36px;
-  margin-top: 44px;
+  display: flex; gap: 40px;
+  margin-top: 48px;
 }
 .stat-item {}
 .stat-num {
   color: #fff;
-  font-size: 26px; font-weight: 700;
-  letter-spacing: -.02em;
-  text-shadow: 0 1px 6px rgba(0,0,0,.2);
+  font-size: 28px; font-weight: 800;
+  letter-spacing: -.03em;
+  text-shadow: 0 1px 8px rgba(0,0,0,.2);
+  line-height: 1.1;
 }
-.stat-num span { font-size: 13px; font-weight: 400; margin-left: 2px; color: rgba(255,255,255,.6); }
-.stat-label { color: rgba(255,255,255,.55); font-size: 11.5px; margin-top: 3px; }
+.stat-num span { font-size: 13px; font-weight: 400; margin-left: 2px; color: rgba(255,255,255,.55); }
+.stat-label { color: rgba(255,255,255,.5); font-size: 11.5px; margin-top: 4px; letter-spacing: .02em; }
 
+/* 底部版权 */
 .brand-footer {
-  color: rgba(255,255,255,.35);
+  color: rgba(255,255,255,.32);
   font-size: 11.5px;
 }
 
-/* ─── RIGHT LOGIN PANEL ─── */
+/* ─── 右侧登录卡片区 ─── */
 .login-side {
-  width: 448px;
+  width: 456px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px 24px;
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(24px) saturate(1.5);
-  -webkit-backdrop-filter: blur(24px) saturate(1.5);
-  border-left: 1px solid rgba(226,232,240,.8);
-  box-shadow: -8px 0 40px rgba(26,86,219,.08);
+  padding: 32px 28px;
+  background: rgba(255,255,255,.93);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  border-left: 1px solid rgba(226,232,240,.85);
+  box-shadow: -10px 0 48px rgba(26,86,219,.08);
 }
 
 .login-card {
   width: 100%;
-  max-width: 372px;
+  max-width: 380px;
 }
 
-/* ─── CARD HEADER ─── */
+/* ─── 卡片头部 ─── */
 .card-header { margin-bottom: 28px; }
-.card-icon {
-  width: 44px; height: 44px;
-  background: var(--primary-light);
-  border-radius: var(--radius-lg);
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 14px;
+
+.card-brand-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
 }
-.card-icon svg { width: 22px; height: 22px; stroke: var(--primary); fill: none; stroke-width: 2; }
+.card-brand-icon {
+  width: 36px; height: 36px;
+  background: var(--primary);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(26,86,219,.3);
+}
+.card-brand-icon svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2; }
+.card-brand-name { font-size: 14px; font-weight: 700; color: var(--text-main); line-height: 1.2; }
+.card-brand-name span { display: block; font-size: 11px; font-weight: 400; color: var(--text-sub); margin-top: 1px; }
+
 .card-title {
   color: var(--text-main);
-  font-size: 22px; font-weight: 700;
-  margin-bottom: 5px;
+  font-size: 23px; font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: -.01em;
 }
-.card-sub { color: var(--text-sub); font-size: 13px; }
+.card-sub { color: var(--text-sub); font-size: 13px; line-height: 1.6; }
 
-/* ─── TABS ─── */
+/* ─── 标签切换 ─── */
 .tab-bar {
   display: flex;
   background: var(--bg-main);
@@ -214,7 +287,9 @@ html, body {
   border-radius: 6px;
   transition: var(--transition);
   font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
 }
+.tab-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
 .tab-btn.active {
   background: var(--bg-white);
   color: var(--primary);
@@ -223,19 +298,19 @@ html, body {
 }
 .tab-btn:hover:not(.active) { color: var(--text-main); }
 
-/* ─── PANELS ─── */
+/* ─── 面板 ─── */
 .panel { display: none; }
 .panel.active { display: block; }
 
-/* ─── FORM ELEMENTS ─── */
+/* ─── 表单元素 ─── */
 .form-group { margin-bottom: 16px; }
 .form-label {
   display: block;
   color: var(--text-sub);
-  font-size: 12px; font-weight: 600;
-  letter-spacing: .04em;
+  font-size: 11.5px; font-weight: 700;
+  letter-spacing: .06em;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 .input-wrap { position: relative; }
 .input-wrap .input-icon {
@@ -244,12 +319,12 @@ html, body {
   display: flex; align-items: center;
   pointer-events: none;
 }
-.input-wrap .input-icon svg { width: 15px; height: 15px; }
+.input-wrap .input-icon svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
 .form-input {
   width: 100%;
   height: 44px;
   padding: 0 12px 0 38px;
-  background: var(--bg-white);
+  background: var(--bg-main);
   border: 1.5px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-main);
@@ -260,10 +335,11 @@ html, body {
 }
 .form-input::placeholder { color: var(--text-light); }
 .form-input:focus {
+  background: var(--bg-white);
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(26,86,219,.1);
 }
-.form-input.error { border-color: var(--error); }
+.form-input.error { border-color: var(--error); background: #fff8f8; }
 
 .input-action {
   position: absolute; right: 0; top: 0; bottom: 0;
@@ -277,7 +353,7 @@ html, body {
   transition: var(--transition);
 }
 .toggle-pw:hover { color: var(--text-sub); }
-.toggle-pw svg { width: 15px; height: 15px; }
+.toggle-pw svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
 
 .code-btn {
   background: none; border: none; cursor: pointer;
@@ -313,25 +389,31 @@ html, body {
 }
 .forgot-link:hover { color: var(--primary-dark); text-decoration: underline; }
 
-/* ─── SUBMIT BTN ─── */
+/* ─── 提交按钮 ─── */
 .btn-submit {
   width: 100%; height: 46px;
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   border: none; border-radius: var(--radius);
-  color: #fff; font-size: 15px; font-weight: 600;
-  cursor: pointer; letter-spacing: .04em;
+  color: #fff; font-size: 15px; font-weight: 700;
+  cursor: pointer; letter-spacing: .05em;
   position: relative; overflow: hidden;
   transition: var(--transition);
   display: flex; align-items: center; justify-content: center; gap: 8px;
   font-family: inherit;
-  box-shadow: 0 4px 14px rgba(26,86,219,.3);
+  box-shadow: 0 4px 16px rgba(26,86,219,.35);
+}
+.btn-submit::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.12) 0%, transparent 60%);
+  pointer-events: none;
 }
 .btn-submit:hover:not(:disabled) {
-  background: var(--primary-dark);
-  box-shadow: 0 6px 18px rgba(26,86,219,.35);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(26,86,219,.42);
 }
-.btn-submit:active:not(:disabled) { transform: scale(.99); }
-.btn-submit:disabled { opacity: .6; cursor: not-allowed; box-shadow: none; }
+.btn-submit:active:not(:disabled) { transform: scale(.99) translateY(0); }
+.btn-submit:disabled { opacity: .6; cursor: not-allowed; box-shadow: none; transform: none; }
 .btn-submit .spinner {
   display: none;
   width: 18px; height: 18px;
@@ -343,7 +425,7 @@ html, body {
 .btn-submit.loading .btn-text { opacity: 0; }
 .btn-submit.loading .spinner { display: block; position: absolute; }
 
-/* ─── DIVIDER ─── */
+/* ─── 分隔线 ─── */
 .divider {
   display: flex; align-items: center; gap: 12px;
   margin: 18px 0;
@@ -354,7 +436,7 @@ html, body {
 }
 .divider span { color: var(--text-light); font-size: 12px; white-space: nowrap; }
 
-/* ─── SSO BTN ─── */
+/* ─── SSO按钮 ─── */
 .btn-sso {
   width: 100%; height: 42px;
   background: var(--bg-white);
@@ -371,18 +453,30 @@ html, body {
   color: var(--primary);
   background: var(--primary-light);
 }
-.btn-sso svg { width: 15px; height: 15px; flex-shrink: 0; }
+.btn-sso svg { width: 15px; height: 15px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 2; }
 
-/* ─── FIELD ERROR ─── */
+/* ─── 安全提示 ─── */
+.security-hint {
+  display: flex; align-items: center; gap: 7px;
+  margin-top: 16px;
+  padding: 9px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius);
+}
+.security-hint svg { width: 14px; height: 14px; stroke: #16a34a; fill: none; stroke-width: 2; flex-shrink: 0; }
+.security-hint span { color: #166534; font-size: 11.5px; line-height: 1.5; }
+
+/* ─── 字段错误 ─── */
 .field-err {
   display: none;
   color: var(--error); font-size: 12px; margin-top: 5px;
-  display: flex; align-items: center; gap: 4px;
+  align-items: center; gap: 4px;
 }
 .field-err.show { display: flex; }
 .field-err::before { content: '!'; width: 14px; height: 14px; border-radius: 50%; background: #fee2e2; color: var(--error); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-/* ─── TOAST ─── */
+/* ─── Toast ─── */
 .toast-wrap {
   position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
   z-index: 9999;
@@ -408,12 +502,13 @@ html, body {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ─── RESPONSIVE ─── */
+/* ─── 响应式 ─── */
 @media (max-width: 860px) {
   .brand-panel { display: none; }
+  .slide-dots { display: none; }
   .login-side {
     width: 100%;
-    background: rgba(255,255,255,.96);
+    background: rgba(255,255,255,.97);
     border-left: none;
     box-shadow: none;
   }
@@ -422,22 +517,41 @@ html, body {
 </head>
 <body>
 
-<!-- Background -->
+<!-- 背景轮播 -->
 <div class="bg-wrap">
-  <img class="bg-img" id="bgImg"
-    src="images/snow_bg.webp"
-    onerror="this.style.display='none'"
-    alt="">
+  <div class="bg-slides" id="bgSlides">
+    <div class="bg-slide active">
+      <img src="https://www.bydauto.com.cn/pc/img/carSeriesNew/e6/e6_main.jpg"
+           onerror="this.closest('.bg-slide').style.background='linear-gradient(135deg,#0a1f4e,#1a3a8f)'"
+           alt="">
+    </div>
+    <div class="bg-slide">
+      <img src="https://www.bydauto.com.cn/pc/img/carSeriesNew/han/han_main.jpg"
+           onerror="this.closest('.bg-slide').style.background='linear-gradient(135deg,#071632,#0f2460)'"
+           alt="">
+    </div>
+    <div class="bg-slide">
+      <img src="https://www.bydauto.com.cn/pc/img/carSeriesNew/tang/tang_main.jpg"
+           onerror="this.closest('.bg-slide').style.background='linear-gradient(135deg,#0a1428,#162d6e)'"
+           alt="">
+    </div>
+    <div class="bg-slide">
+      <img src="https://www.bydauto.com.cn/pc/img/carSeriesNew/seal/seal_main.jpg"
+           onerror="this.closest('.bg-slide').style.background='linear-gradient(135deg,#060e2a,#0f2150)'"
+           alt="">
+    </div>
+  </div>
   <div class="bg-overlay"></div>
+  <!-- 轮播小点 -->
+  <div class="slide-dots" id="slideDots"></div>
 </div>
 
 <div class="page">
-  <!-- Left info panel -->
+  <!-- 左侧品牌信息 -->
   <div class="brand-panel">
     <div class="brand-top">
       <div class="brand-logo">
         <div class="brand-logo-mark">
-          <!-- truck / van icon -->
           <svg viewBox="0 0 24 24">
             <rect x="1" y="8" width="15" height="11" rx="1"/>
             <path d="M16 8l3 3v8h-3V8z"/>
@@ -446,109 +560,122 @@ html, body {
           </svg>
         </div>
         <div>
-          <div class="brand-logo-text">商用车售后知识平台</div>
+          <div class="brand-logo-text">比亚迪售后知识管理平台</div>
           <div class="brand-logo-sub">After-Sales Knowledge Platform</div>
         </div>
       </div>
 
-      <div class="brand-headline">
-        售后知识<br>
-        管理平台
-        <br><em>智能检索 · 精准响应</em>
-      </div>
-      <div class="brand-desc">
-        整合保养手册、质保规则、维修手册与典型案例，<br>
-        为服务顾问、维修技师及售后工程师提供<br>
-        一站式知识检索与诊断辅助服务。
+      <div class="brand-headline-wrap">
+        <div class="brand-eyebrow">
+          <div class="brand-eyebrow-dot"></div>
+          <span>系统运行中 · 知识库已就绪</span>
+        </div>
+        <div class="brand-headline">
+          售后知识<br>
+          <span class="hl-accent">智能管理</span><br>
+          <em>一站检索解答</em>
+        </div>
+        <div class="brand-desc">
+          整合保养手册、维修手册、质保政策与典型案例，<br>
+          通过多路混合 RAG 检索为售后团队提供专业支撑。<br>
+          知识来源可溯源、答案有依据、响应秒级呈现。
+        </div>
       </div>
 
       <div class="brand-pills">
-        <span class="pill">📄 保养手册</span>
-        <span class="pill">🛡 质保规则</span>
-        <span class="pill">🔧 维修手册</span>
-        <span class="pill">💡 典型案例</span>
+        <span class="pill">📚 结构化知识库</span>
+        <span class="pill">🔍 四路混合检索</span>
+        <span class="pill">🤖 LLM 智能问答</span>
+        <span class="pill">📎 来源可溯源</span>
+        <span class="pill">⚡ 流式实时输出</span>
       </div>
 
       <div class="brand-stats">
         <div class="stat-item">
           <div class="stat-num">12<span>+</span></div>
-          <div class="stat-label">知识文档类型</div>
+          <div class="stat-label">车型覆盖</div>
         </div>
         <div class="stat-item">
-          <div class="stat-num">3<span>端</span></div>
-          <div class="stat-label">厂家 / 经销商 / 客户</div>
+          <div class="stat-num">3<span>类</span></div>
+          <div class="stat-label">手册 / 质保 / 案例</div>
         </div>
         <div class="stat-item">
           <div class="stat-num">4<span>路</span></div>
-          <div class="stat-label">混合检索策略</div>
+          <div class="stat-label">并行检索路由</div>
         </div>
       </div>
     </div>
 
     <div class="brand-footer">
-      &copy; 2026 商用车售后知识管理平台 &nbsp;·&nbsp; 保留所有权利
+      &copy; 2026 比亚迪商用车售后知识管理平台 &nbsp;·&nbsp; 内部专用系统
     </div>
   </div>
 
-  <!-- Right login panel -->
+  <!-- 右侧登录卡片 -->
   <div class="login-side">
     <div class="login-card">
       <div class="card-header">
-        <div class="card-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-            <polyline points="10 17 15 12 10 7"/>
-            <line x1="15" y1="12" x2="3" y2="12"/>
-          </svg>
+        <!-- 品牌行 -->
+        <div class="card-brand-row">
+          <div class="card-brand-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+          </div>
+          <div>
+            <div class="card-brand-name">比亚迪售后知识管理平台<span>BYD After-Sales Knowledge Platform</span></div>
+          </div>
         </div>
-        <div class="card-title">账号登录</div>
-        <div class="card-sub">请使用企业账号或手机号登录系统</div>
+        <div class="card-title">欢迎登录</div>
+        <div class="card-sub">请使用员工账号或手机验证码登录系统</div>
       </div>
 
-      <!-- Tab bar -->
+      <!-- Tab切换 -->
       <div class="tab-bar">
-        <button class="tab-btn active" data-tab="pwd">密码登录</button>
-        <button class="tab-btn" data-tab="sms">验证码登录</button>
+        <button class="tab-btn active" data-tab="pwd">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          密码登录
+        </button>
+        <button class="tab-btn" data-tab="sms">
+          <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.29 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          验证码登录
+        </button>
       </div>
 
-      <!-- Password panel -->
+      <!-- 密码登录面板 -->
       <div class="panel active" id="panel-pwd">
         <div class="form-group">
-          <label class="form-label">工号 / 账号</label>
+          <label class="form-label">账号 / 手机号</label>
           <div class="input-wrap">
             <span class="input-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
+              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </span>
             <input class="form-input" id="pwd-account" type="text"
-              placeholder="请输入工号或账号" autocomplete="username" maxlength="64">
+              placeholder="请输入员工账号或手机号" autocomplete="username" maxlength="64">
           </div>
-          <div class="field-err" id="err-account">请输入账号</div>
+          <div class="field-err" id="err-account">请输入登录账号</div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">密码</label>
+          <label class="form-label">登录密码</label>
           <div class="input-wrap">
             <span class="input-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
+              <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </span>
             <input class="form-input" id="pwd-password" type="password"
-              placeholder="请输入密码" autocomplete="current-password" maxlength="64">
+              placeholder="请输入登录密码" autocomplete="current-password" maxlength="64">
             <div class="input-action">
               <button class="toggle-pw" id="pwToggle" type="button" title="显示/隐藏密码">
-                <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg id="eye-icon" viewBox="0 0 24 24">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                   <circle cx="12" cy="12" r="3"/>
                 </svg>
               </button>
             </div>
           </div>
-          <div class="field-err" id="err-password">请输入密码</div>
+          <div class="field-err" id="err-password">请输入登录密码</div>
         </div>
 
         <div class="form-row">
@@ -556,7 +683,7 @@ html, body {
             <input type="checkbox" id="rememberMe">
             <span>记住账号</span>
           </label>
-          <a class="forgot-link" href="#" onclick="showToast('请联系系统管理员重置密码','info');return false;">忘记密码？</a>
+          <a class="forgot-link" href="#" onclick="showToast('请联系系统管理员重置登录密码','info');return false;">忘记密码？</a>
         </div>
 
         <button class="btn-submit" id="btn-pwd-login">
@@ -565,27 +692,25 @@ html, body {
         </button>
       </div>
 
-      <!-- SMS panel -->
+      <!-- 验证码登录面板 -->
       <div class="panel" id="panel-sms">
         <div class="form-group">
-          <label class="form-label">手机号</label>
+          <label class="form-label">手机号码</label>
           <div class="input-wrap">
             <span class="input-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.29 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
+              <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.29 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
             </span>
             <input class="form-input" id="sms-phone" type="tel"
-              placeholder="请输入手机号" maxlength="11">
+              placeholder="请输入手机号码" maxlength="11">
           </div>
-          <div class="field-err" id="err-phone">请输入有效的手机号</div>
+          <div class="field-err" id="err-phone">请输入有效的手机号码</div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">验证码</label>
+          <label class="form-label">短信验证码</label>
           <div class="input-wrap no-icon">
             <input class="form-input" id="sms-code" type="text"
-              placeholder="请输入验证码" maxlength="6">
+              placeholder="请输入短信验证码" maxlength="6">
             <div class="input-action">
               <button class="code-btn" id="btn-send-code" type="button">获取验证码</button>
             </div>
@@ -602,25 +727,63 @@ html, body {
       </div>
 
       <!-- SSO -->
-      <div class="divider"><span>或使用企业单点登录</span></div>
+      <div class="divider"><span>或使用企业身份登录</span></div>
       <button class="btn-sso" id="btn-sso">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-          <path d="M8 21h8m-4-4v4"/>
-        </svg>
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
         企业 SSO 单点登录
       </button>
+
+      <!-- 安全提示 -->
+      <div class="security-hint">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>本系统采用 HTTPS 加密传输，数据安全有保障</span>
+      </div>
 
     </div>
   </div>
 </div>
 
-<!-- Toast container -->
+<!-- Toast容器 -->
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
 (function () {
-  // ─── Tab switching ───
+  /* ─── 背景轮播 ─── */
+  const slides = document.querySelectorAll('.bg-slide');
+  const dotsWrap = document.getElementById('slideDots');
+  let current = 0;
+  let autoTimer = null;
+
+  // 生成小圆点
+  slides.forEach((_, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'slide-dot' + (i === 0 ? ' active' : '');
+    btn.addEventListener('click', () => goSlide(i));
+    dotsWrap.appendChild(btn);
+  });
+
+  function goSlide(idx) {
+    slides[current].classList.remove('active');
+    dotsWrap.children[current].classList.remove('active');
+    current = idx;
+    slides[current].classList.add('active');
+    dotsWrap.children[current].classList.add('active');
+  }
+
+  function nextSlide() {
+    goSlide((current + 1) % slides.length);
+  }
+
+  function startAuto() {
+    autoTimer = setInterval(nextSlide, 4500);
+  }
+
+  startAuto();
+  // 鼠标悬停暂停
+  document.getElementById('bgSlides').addEventListener('mouseenter', () => clearInterval(autoTimer));
+  document.getElementById('bgSlides').addEventListener('mouseleave', startAuto);
+
+  /* ─── Tab切换 ─── */
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -630,7 +793,7 @@ html, body {
     });
   });
 
-  // ─── Password toggle ───
+  /* ─── 密码显示切换 ─── */
   const pwInput = document.getElementById('pwd-password');
   const eyeIcon = document.getElementById('eye-icon');
   document.getElementById('pwToggle').addEventListener('click', () => {
@@ -641,7 +804,7 @@ html, body {
       : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
   });
 
-  // ─── Remember account ───
+  /* ─── 记住账号 ─── */
   const accountInput = document.getElementById('pwd-account');
   const savedAcc = localStorage.getItem('crm_account');
   if (savedAcc) {
@@ -649,7 +812,7 @@ html, body {
     document.getElementById('rememberMe').checked = true;
   }
 
-  // ─── Toast ───
+  /* ─── Toast ─── */
   function showToast(msg, type = 'info', duration = 3000) {
     const wrap = document.getElementById('toastWrap');
     const t = document.createElement('div');
@@ -664,7 +827,7 @@ html, body {
   }
   window.showToast = showToast;
 
-  // ─── Field error helpers ───
+  /* ─── 字段错误处理 ─── */
   function setErr(id, show) {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('show', show);
@@ -674,7 +837,7 @@ html, body {
     document.querySelectorAll('.form-input').forEach(e => e.classList.remove('error'));
   }
 
-  // ─── Password login ───
+  /* ─── 密码登录 ─── */
   function handlePwdLogin() {
     clearErrs();
     const account = accountInput.value.trim();
@@ -700,7 +863,7 @@ html, body {
   pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') handlePwdLogin(); });
   accountInput.addEventListener('keydown', e => { if (e.key === 'Enter') handlePwdLogin(); });
 
-  // ─── SMS code countdown ───
+  /* ─── 短信验证码倒计时 ─── */
   let codeTimer = null;
   document.getElementById('btn-send-code').addEventListener('click', () => {
     const phone = document.getElementById('sms-phone').value.trim();
@@ -713,18 +876,18 @@ html, body {
     document.getElementById('sms-phone').classList.remove('error');
     const btn = document.getElementById('btn-send-code');
     let sec = 60;
-    btn.disabled = true; btn.textContent = sec + 's后重发';
-    showToast('验证码已发送至手机', 'success');
+    btn.disabled = true; btn.textContent = sec + 's后重新获取';
+    showToast('验证码已发送至' + phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2'), 'success');
     codeTimer = setInterval(() => {
       sec--;
-      btn.textContent = sec + 's后重发';
+      btn.textContent = sec + 's后重新获取';
       if (sec <= 0) {
-        clearInterval(codeTimer); btn.disabled = false; btn.textContent = '获取验证码';
+        clearInterval(codeTimer); btn.disabled = false; btn.textContent = '重新获取验证码';
       }
     }, 1000);
   });
 
-  // ─── SMS login ───
+  /* ─── 短信登录 ─── */
   function handleSmsLogin() {
     clearErrs();
     const phone = document.getElementById('sms-phone').value.trim();
@@ -750,7 +913,7 @@ html, body {
   document.getElementById('btn-sms-login').addEventListener('click', handleSmsLogin);
   document.getElementById('sms-code').addEventListener('keydown', e => { if (e.key === 'Enter') handleSmsLogin(); });
 
-  // ─── SSO ───
+  /* ─── SSO ─── */
   document.getElementById('btn-sso').addEventListener('click', () => {
     showToast('正在跳转至企业 SSO 认证...', 'info');
     setTimeout(() => { window.location.href = 'import.html'; }, 1200);
