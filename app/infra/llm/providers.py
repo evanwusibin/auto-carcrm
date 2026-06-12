@@ -1,7 +1,9 @@
 from langchain_openai import ChatOpenAI
 
 from app.infra.config.providers import infra_config
+from app.shared.config.lm_config import is_vl_enabled
 from app.shared.model import generate_embeddings, get_bge_m3_ef, get_llm_client, get_reranker_model
+from app.shared.runtime.logger import logger
 
 
 class LLMprovider:
@@ -13,6 +15,13 @@ class LLMprovider:
 
     # 获取vision_chat  视觉模型  允许传递 不传递给默认值
     def vision_chat(self,vision_model_name:str= None):
+        # 总开关关闭时直接返回 None，业务侧需判空降级为纯文本
+        if not is_vl_enabled():
+            logger.warning(
+                "[LLMprovider.vision_chat] VL_ENABLED=false，跳过视觉模型调用，"
+                "请业务侧走纯文本/占位降级"
+            )
+            return None
         model_name = vision_model_name or infra_config.llm.lv_model
         return get_llm_client(model = model_name)
 

@@ -31,3 +31,16 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+
+if __name__ == "__main__":
+    # 一键启动主应用：``python app/main.py`` 或 ``uv run python -m app.main``
+    # 主机 / 端口读自 settings（环境变量 APP_HOST / IMPORT_APP_PORT）
+    import uvicorn
+
+    uvicorn.run(
+        app,
+        host=settings.app_host,
+        port=settings.import_app_port,
+        log_level="info",
+    )
