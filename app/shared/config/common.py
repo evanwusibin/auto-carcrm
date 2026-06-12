@@ -76,3 +76,43 @@ def env_float(name: str, default: float = 0.0) -> float:
         return float(value)
     except ValueError:
         return default
+
+
+def env_int(name: str, default: int = 0) -> int:
+    """
+    读取整数配置。
+
+    Args:
+        name: 环境变量名称。
+        default: 变量不存在、为空或格式非法时的默认值。
+
+    Returns:
+        int: 转换后的整数值。
+    """
+    value = os.getenv(name)
+    if value is None or value == "":
+        return default
+
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
+def env_list(name: str, default: list[str] | None = None, sep: str = ",") -> list[str]:
+    """
+    读取逗号分隔的字符串列表。
+
+    Args:
+        name: 环境变量名称。
+        default: 默认列表。
+        sep: 分隔符。
+
+    Returns:
+        list[str]: 去空白后的字符串列表。
+    """
+    value = os.getenv(name)
+    if value is None or value.strip() == "":
+        return list(default or [])
+
+    return [item.strip() for item in value.split(sep) if item.strip()]

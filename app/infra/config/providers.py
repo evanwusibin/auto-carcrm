@@ -67,4 +67,3 @@ class InfraConfig:
     # field(default_factory=lambda: settings)
 
 infra_config = InfraConfig()
-print(infra_config.llm.llm_model)

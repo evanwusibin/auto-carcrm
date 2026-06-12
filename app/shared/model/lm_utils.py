@@ -1,7 +1,5 @@
-from langchain_classic.utils import openai
 from langchain_core.exceptions import LangChainException
 from langchain_openai import ChatOpenAI
-from modelscope.models.nlp.codegeex.codegeex_for_code_generation import model_provider
 
 """
 工具模块，负责提供 lm 相关的辅助能力。
@@ -10,7 +8,7 @@ from app.shared.config.lm_config import lm_config
 from app.shared.runtime.logger import logger
 
 # 私有方法
-_DEFAULT_LLM_MODEL = "qwen3-32b"
+_DEFAULT_LLM_MODEL = "gpt-4o-mini"
 _DEFAULT_TEMPERATURE = 0.1
 _llm_client_cache: dict[tuple[str, bool], ChatOpenAI] = {}
 
@@ -50,13 +48,10 @@ def get_llm_client(model: str | None = None, json_mode: bool = False) -> ChatOpe
         raise ValueError("[LLM客户端] 配置缺失：请在.env中配置OPENAI_BASE_URL（API接口基础地址）")
     logger.info(f"[LLM客户端] 开始初始化新实例：模型={target_model}，JSON模式={json_mode}")
 
-    # 4. 配置参数组装：区分「国产模型私有参数」和「OpenAI通用参数」
-    # extra_body：千问/即梦等国产模型专属私有参数（LangChain透传至API）
-    extra_body = {"enable_thinking": False}  # 千问专属：关闭思考链输出，减少冗余内容
-    # model_kwargs：OpenAI通用参数，所有兼容API均支持
+    # 4. 配置参数组装：区分「OpenAI 通用参数」与「国产模型私有参数」
+    # model_kwargs：OpenAI 通用参数，所有兼容 API 均支持
     model_kwargs = {}
     if json_mode:
-        # json乌龟的屁股，规定的
         # 开启JSON标准输出模式，强制模型返回可解析的json_object
         model_kwargs["response_format"] = {"type": "json_object"}
         logger.debug(f"[LLM客户端] 已开启JSON输出模式，模型将返回标准JSON结构")
@@ -67,8 +62,7 @@ def get_llm_client(model: str | None = None, json_mode: bool = False) -> ChatOpe
             model=target_model,  # 目标模型名
             temperature=lm_config.llm_temperature or _DEFAULT_TEMPERATURE,  # 低温度保证输出确定性（0~1）
             api_key=lm_config.api_key,  # API密钥
-            base_url=lm_config.base_url,  # API基础地址（适配国产模型代理地址）
-            extra_body=extra_body,  # 国产模型私有参数透传
+            base_url=lm_config.base_url,  # API基础地址（适配任意 OpenAI 兼容代理地址）
             model_kwargs=model_kwargs,  # OpenAI通用参数
         )
     except LangChainException as e:

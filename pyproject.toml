@@ -40,6 +40,7 @@ dependencies = [
     "stem>=1.8.2",
     "addict>=2.4.0",
     "dict>=2018.11.19",
+    "python-jose[cryptography]>=3.3.0",
 ]
 # 项目下配置环境变量(更推荐)
 [[tool.uv.index]]
