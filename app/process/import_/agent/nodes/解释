@@ -1,0 +1,38 @@
+D:\heimaAI\PytorchSDXX\08_掌柜智库\ai_0302_knowledge_base\app\rag\import_
+
+对应再rag里面有对应的启动的服务
+
+process层负责调度
+rag层负责实现
+- node_entry` 是图中的入口节点，负责承接 LangGraph 的 `state`
+- `resolve_input_file` 是对应的业务 service，负责真正做文件类型识别和字段回写
+- 也就是说，`process` 层负责“调度”，`rag` 层负责“实现”
+
+- node_pdf_to_md` 是图中的第二步节点
+- `parse_pdf_to_markdown` 负责真正调用 MinerU 做 PDF 解析
+- 节点本身不处理解析细节，只负责衔接图状态和 service
+
+
+- 'node_md_img` 是图中的图片增强节点
+- `enrich_markdown_images` 负责真正扫描 Markdown 图片、调用视觉模型、上传 MinIO
+- 节点只保留调度和任务状态记录
+
+
+- node_document_split` 是图中的文档切分节点
+- `split_document` 负责真正完成标题切分和长度切分
+- 节点只负责把上游 `state` 传给 service，再把结果继续往下游传
+
+
+- `node_item_name_recognition` 是图中的主体识别节点
+- `recognize_and_index_item_name` 负责真正做 LLM 主体识别和主体索引写入
+- 节点负责图调度，service 负责识别逻辑
+
+
+- node_bge_embedding` 是图中的向量化节点
+- `generate_chunk_embeddings` 负责真正调用 Embedding 模型生成向量
+- 节点负责图执行衔接，service 负责批量向量化
+
+- node_import_milvus` 是图中的最终入库节点
+- `index_chunks` 负责真正准备集合、删除旧数据、写入 Milvus
+- 节点只负责把最终结果送进向量库 service
+[index.service]  对应 service 文件**: `app/rag/import_/index_service.py`

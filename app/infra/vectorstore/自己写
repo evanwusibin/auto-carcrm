@@ -1,0 +1,1 @@
+定义了 config 后 统一暴露在infra里面 对外gateway 使用方法

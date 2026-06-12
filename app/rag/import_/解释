@@ -1,0 +1,13 @@
+D:\heimaAI\PytorchSDXX\08_掌柜智库\ai_0302_knowledge_base\app\process\import_\agent\nodes
+
+对应再nodes里面有对应的启动的服务
+
+这个里面的都是不需要手敲的，只需要理解就行，重点都在nodes里面还有main_graph和state
+
+  接下来你的重点：等老师讲到这 4 个 service 时，那才是该"多敲多熟悉"的地方——
+  - split_service.py —— 切片策略
+  - embedding_service.py —— 向量化
+  - index_service.py —— 入库 Milvus
+  - item_name_service.py —— 实体识别
+
+  这 4 个才是简历亮点、面试考点。PDF 解析那块你已经理解了，够了。
