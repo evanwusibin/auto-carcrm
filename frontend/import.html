@@ -88,7 +88,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Ping
 
 .nav-section { padding: 16px 12px 8px; }
 .nav-section-label {
-  color: rgba(255,255,255,.28); font-size: 10px; font-weight: 600;
+  color: var(--gray-500); font-size: 10px; font-weight: 600;
   letter-spacing: .1em; text-transform: uppercase;
   padding: 0 8px; margin-bottom: 6px;
 }
@@ -105,11 +105,12 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Ping
   white-space: nowrap;
 }
 .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .75; }
-.nav-item:hover { background: rgba(26,86,219,.22); color: #fff; }
+.nav-item:hover { background: var(--blue-50); color: var(--blue-600); }
 .nav-item.active {
-  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: #1a56db;
-  box-shadow: 0 2px 8px rgba(26,86,219,.35);
+  background: var(--blue-50);
+  border-left: 3px solid var(--primary);
+  color: var(--blue-600);
+  box-shadow: none;
 }
 .nav-item.active svg { opacity: 1; }
 
@@ -126,12 +127,12 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Ping
 .user-card:hover { background: #f8fafc; }
 .avatar {
   width: 30px; height: 30px; border-radius: 50%;
-  background: #e8effd;
-  color: #fff; font-size: 12px; font-weight: 700;
+  background: var(--blue-100);
+  color: var(--blue-600); font-size: 12px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .user-info { min-width: 0; }
-.user-name { color: rgba(255,255,255,.85); font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-name { color: var(--gray-900); font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .user-role { color: #64748b; font-size: 11px; }
 
 /* ─── MAIN AREA ─── */
@@ -269,7 +270,7 @@ textarea.form-control { height: auto; padding: 8px 10px; resize: vertical; min-h
 /* ─── BUTTONS ─── */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 16px; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: var(--transition); white-space: nowrap; }
 .btn svg { width: 14px; height: 14px; }
-.btn-primary { background: var(--blue-600); color: #1e293b; }
+.btn-primary { background: var(--blue-600); color: #fff; }
 .btn-primary:hover { background: var(--blue-700); }
 .btn-secondary { background: var(--white); color: var(--gray-700); border: 1px solid var(--gray-300); }
 .btn-secondary:hover { background: var(--gray-100); }
