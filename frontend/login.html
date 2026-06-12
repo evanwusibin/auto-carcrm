@@ -3,60 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>比亚迪商用车 — 售后知识管理平台</title>
+<title>售后知识管理平台 — 登录</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --blue-700: #0a4fa3;
-  --blue-600: #1565c0;
-  --blue-500: #1976d2;
-  --blue-400: #42a5f5;
-  --blue-100: #e3f2fd;
-  --gray-900: #111827;
-  --gray-700: #374151;
-  --gray-500: #6b7280;
-  --gray-400: #9ca3af;
-  --gray-200: #e5e7eb;
-  --gray-100: #f3f4f6;
-  --white: #ffffff;
-  --error: #dc2626;
-  --success: #059669;
-  --warn: #d97706;
-  --radius: 6px;
-  --shadow-lg: 0 20px 60px rgba(0,0,0,.35);
-  --shadow-card: 0 4px 24px rgba(0,0,0,.18);
-  --transition: .2s cubic-bezier(.4,0,.2,1);
+  --primary:       #1a56db;
+  --primary-dark:  #1341b0;
+  --primary-light: #e8effd;
+  --accent:        #0ea5e9;
+  --text-main:     #1e293b;
+  --text-sub:      #64748b;
+  --text-light:    #94a3b8;
+  --border:        #e2e8f0;
+  --bg-main:       #f1f5f9;
+  --bg-white:      #ffffff;
+  --success:       #16a34a;
+  --error:         #dc2626;
+  --warn:          #d97706;
+  --radius:        8px;
+  --radius-lg:     12px;
+  --shadow-card:   0 8px 40px rgba(26,86,219,.13);
+  --shadow-sm:     0 2px 8px rgba(0,0,0,.06);
+  --transition:    .2s cubic-bezier(.4,0,.2,1);
 }
 
 html, body {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
   font-size: 14px;
-  color: var(--gray-900);
+  color: var(--text-main);
   overflow: hidden;
 }
 
 /* ─── BACKGROUND ─── */
 .bg-wrap {
   position: fixed; inset: 0; z-index: 0;
-  background: #0d1e3a;
+  background: #c7d9f5;
 }
 .bg-img {
   width: 100%; height: 100%;
   object-fit: cover;
-  object-position: center 40%;
+  object-position: center 45%;
   display: block;
-  opacity: .92;
+  opacity: 1;
   transition: opacity .6s;
 }
+/* Subtle blue-tinted overlay so left panel text stays readable */
 .bg-overlay {
   position: absolute; inset: 0;
   background: linear-gradient(
     105deg,
-    rgba(8,28,64,.82) 0%,
-    rgba(10,40,90,.55) 45%,
-    rgba(5,15,35,.30) 100%
+    rgba(15,40,100,.55) 0%,
+    rgba(15,40,100,.30) 45%,
+    rgba(15,40,100,.08) 100%
   );
 }
 
@@ -68,7 +68,7 @@ html, body {
   align-items: stretch;
 }
 
-/* ─── LEFT BRAND PANEL ─── */
+/* ─── LEFT INFO PANEL ─── */
 .brand-panel {
   flex: 1 1 0;
   display: flex;
@@ -78,92 +78,129 @@ html, body {
   min-width: 0;
 }
 .brand-top { display: flex; flex-direction: column; gap: 0; }
+
 .brand-logo {
-  display: flex; align-items: center; gap: 14px;
+  display: flex; align-items: center; gap: 12px;
   margin-bottom: 64px;
 }
 .brand-logo-mark {
-  width: 44px; height: 44px;
-  background: var(--blue-500);
+  width: 40px; height: 40px;
+  background: var(--primary);
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(26,86,219,.35);
 }
-.brand-logo-mark svg { width: 26px; height: 26px; fill: #fff; }
-.brand-logo-text { color: rgba(255,255,255,.95); font-size: 17px; font-weight: 600; letter-spacing: .02em; }
-.brand-logo-sub { color: rgba(255,255,255,.5); font-size: 12px; margin-top: 2px; }
+.brand-logo-mark svg { width: 22px; height: 22px; stroke: #fff; fill: none; stroke-width: 2; }
+.brand-logo-text {
+  color: #fff;
+  font-size: 16px; font-weight: 600;
+  letter-spacing: .01em;
+  text-shadow: 0 1px 4px rgba(0,0,0,.25);
+}
+.brand-logo-sub {
+  color: rgba(255,255,255,.65);
+  font-size: 11.5px; margin-top: 2px;
+}
 
 .brand-headline {
   color: #fff;
-  font-size: clamp(28px, 3vw, 44px);
+  font-size: clamp(26px, 3vw, 42px);
   font-weight: 700;
-  line-height: 1.18;
+  line-height: 1.2;
   letter-spacing: -.01em;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  text-shadow: 0 2px 12px rgba(0,0,0,.3);
 }
 .brand-headline em {
   font-style: normal;
-  color: #64b5f6;
+  color: #93c5fd;
 }
 .brand-desc {
-  color: rgba(255,255,255,.62);
-  font-size: 15px;
-  line-height: 1.7;
-  max-width: 380px;
+  color: rgba(255,255,255,.75);
+  font-size: 14.5px;
+  line-height: 1.75;
+  max-width: 400px;
+  text-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+
+.brand-pills {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 36px;
+}
+.pill {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12.5px; font-weight: 500;
+  background: rgba(255,255,255,.15);
+  color: rgba(255,255,255,.9);
+  border: 1px solid rgba(255,255,255,.25);
+  backdrop-filter: blur(4px);
 }
 
 .brand-stats {
-  display: flex; gap: 40px;
-  margin-top: 56px;
+  display: flex; gap: 36px;
+  margin-top: 44px;
 }
-.stat-item { }
+.stat-item {}
 .stat-num {
   color: #fff;
-  font-size: 28px; font-weight: 700;
+  font-size: 26px; font-weight: 700;
   letter-spacing: -.02em;
+  text-shadow: 0 1px 6px rgba(0,0,0,.2);
 }
-.stat-num span { font-size: 14px; font-weight: 400; margin-left: 2px; color: rgba(255,255,255,.6); }
-.stat-label { color: rgba(255,255,255,.5); font-size: 12px; margin-top: 3px; }
+.stat-num span { font-size: 13px; font-weight: 400; margin-left: 2px; color: rgba(255,255,255,.6); }
+.stat-label { color: rgba(255,255,255,.55); font-size: 11.5px; margin-top: 3px; }
 
 .brand-footer {
-  color: rgba(255,255,255,.3);
-  font-size: 12px;
+  color: rgba(255,255,255,.35);
+  font-size: 11.5px;
 }
 
-/* ─── LOGIN PANEL ─── */
+/* ─── RIGHT LOGIN PANEL ─── */
 .login-side {
-  width: 440px;
+  width: 448px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 32px 24px;
-  background: rgba(255,255,255,.07);
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
-  border-left: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border-left: 1px solid rgba(226,232,240,.8);
+  box-shadow: -8px 0 40px rgba(26,86,219,.08);
 }
 
 .login-card {
   width: 100%;
-  max-width: 368px;
+  max-width: 372px;
 }
 
-.card-header { margin-bottom: 32px; }
-.card-title {
-  color: #fff;
-  font-size: 22px; font-weight: 700;
-  margin-bottom: 6px;
+/* ─── CARD HEADER ─── */
+.card-header { margin-bottom: 28px; }
+.card-icon {
+  width: 44px; height: 44px;
+  background: var(--primary-light);
+  border-radius: var(--radius-lg);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px;
 }
-.card-sub { color: rgba(255,255,255,.5); font-size: 13px; }
+.card-icon svg { width: 22px; height: 22px; stroke: var(--primary); fill: none; stroke-width: 2; }
+.card-title {
+  color: var(--text-main);
+  font-size: 22px; font-weight: 700;
+  margin-bottom: 5px;
+}
+.card-sub { color: var(--text-sub); font-size: 13px; }
 
 /* ─── TABS ─── */
 .tab-bar {
   display: flex;
-  background: rgba(255,255,255,.08);
+  background: var(--bg-main);
   border-radius: var(--radius);
   padding: 3px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   gap: 2px;
 }
 .tab-btn {
@@ -171,117 +208,130 @@ html, body {
   padding: 8px 0;
   border: none;
   background: transparent;
-  color: rgba(255,255,255,.55);
+  color: var(--text-sub);
   font-size: 13px; font-weight: 500;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: var(--transition);
+  font-family: inherit;
 }
 .tab-btn.active {
-  background: rgba(255,255,255,.15);
-  color: #fff;
+  background: var(--bg-white);
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
 }
-.tab-btn:hover:not(.active) { color: rgba(255,255,255,.8); }
+.tab-btn:hover:not(.active) { color: var(--text-main); }
 
 /* ─── PANELS ─── */
 .panel { display: none; }
 .panel.active { display: block; }
 
 /* ─── FORM ELEMENTS ─── */
-.form-group { margin-bottom: 18px; }
+.form-group { margin-bottom: 16px; }
 .form-label {
   display: block;
-  color: rgba(255,255,255,.7);
-  font-size: 12px; font-weight: 500;
+  color: var(--text-sub);
+  font-size: 12px; font-weight: 600;
   letter-spacing: .04em;
   text-transform: uppercase;
-  margin-bottom: 7px;
+  margin-bottom: 6px;
 }
 .input-wrap { position: relative; }
 .input-wrap .input-icon {
   position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-  color: rgba(255,255,255,.35);
+  color: var(--text-light);
   display: flex; align-items: center;
   pointer-events: none;
 }
-.input-wrap .input-icon svg { width: 16px; height: 16px; }
+.input-wrap .input-icon svg { width: 15px; height: 15px; }
 .form-input {
   width: 100%;
   height: 44px;
-  padding: 0 12px 0 40px;
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.2);
+  padding: 0 12px 0 38px;
+  background: var(--bg-white);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius);
-  color: #fff;
+  color: var(--text-main);
   font-size: 14px;
   outline: none;
   transition: var(--transition);
+  font-family: inherit;
 }
-.form-input::placeholder { color: rgba(255,255,255,.3); }
+.form-input::placeholder { color: var(--text-light); }
 .form-input:focus {
-  border-color: var(--blue-400);
-  background: rgba(255,255,255,.14);
-  box-shadow: 0 0 0 3px rgba(66,165,245,.2);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(26,86,219,.1);
 }
-.form-input.error { border-color: #f87171; }
+.form-input.error { border-color: var(--error); }
 
 .input-action {
   position: absolute; right: 0; top: 0; bottom: 0;
   display: flex; align-items: center;
 }
-.toggle-pw, .code-btn {
+.toggle-pw {
   background: none; border: none; cursor: pointer;
-  color: rgba(255,255,255,.45);
+  color: var(--text-light);
   padding: 0 12px;
-  font-size: 12px;
-  display: flex; align-items: center; gap: 4px;
+  display: flex; align-items: center;
   transition: var(--transition);
 }
-.toggle-pw:hover, .code-btn:hover { color: rgba(255,255,255,.85); }
-.toggle-pw svg { width: 16px; height: 16px; }
+.toggle-pw:hover { color: var(--text-sub); }
+.toggle-pw svg { width: 15px; height: 15px; }
+
 .code-btn {
-  color: var(--blue-400); font-weight: 500;
-  border-left: 1px solid rgba(255,255,255,.15);
+  background: none; border: none; cursor: pointer;
+  color: var(--primary); font-weight: 600;
+  padding: 0 12px;
+  font-size: 12.5px;
+  border-left: 1.5px solid var(--border);
   height: 30px;
   white-space: nowrap;
+  transition: var(--transition);
+  font-family: inherit;
 }
-.code-btn:disabled { color: rgba(255,255,255,.3); cursor: not-allowed; }
+.code-btn:hover { color: var(--primary-dark); }
+.code-btn:disabled { color: var(--text-light); cursor: not-allowed; }
 
-/* code input no icon */
 .input-wrap.no-icon .form-input { padding-left: 12px; }
 
 .form-row {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 .remember-wrap {
-  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  display: flex; align-items: center; gap: 7px; cursor: pointer;
 }
 .remember-wrap input[type=checkbox] {
-  width: 15px; height: 15px; accent-color: var(--blue-400); cursor: pointer;
+  width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer;
 }
-.remember-wrap span { color: rgba(255,255,255,.6); font-size: 13px; }
+.remember-wrap span { color: var(--text-sub); font-size: 13px; }
 .forgot-link {
-  color: var(--blue-400); font-size: 13px;
+  color: var(--primary); font-size: 13px;
   text-decoration: none;
+  transition: var(--transition);
 }
-.forgot-link:hover { text-decoration: underline; }
+.forgot-link:hover { color: var(--primary-dark); text-decoration: underline; }
 
 /* ─── SUBMIT BTN ─── */
 .btn-submit {
   width: 100%; height: 46px;
-  background: var(--blue-600);
+  background: var(--primary);
   border: none; border-radius: var(--radius);
   color: #fff; font-size: 15px; font-weight: 600;
-  cursor: pointer; letter-spacing: .02em;
-  position: relative;
-  overflow: hidden;
+  cursor: pointer; letter-spacing: .04em;
+  position: relative; overflow: hidden;
   transition: var(--transition);
   display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: inherit;
+  box-shadow: 0 4px 14px rgba(26,86,219,.3);
 }
-.btn-submit:hover:not(:disabled) { background: var(--blue-500); }
+.btn-submit:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: 0 6px 18px rgba(26,86,219,.35);
+}
 .btn-submit:active:not(:disabled) { transform: scale(.99); }
-.btn-submit:disabled { opacity: .6; cursor: not-allowed; }
+.btn-submit:disabled { opacity: .6; cursor: not-allowed; box-shadow: none; }
 .btn-submit .spinner {
   display: none;
   width: 18px; height: 18px;
@@ -293,40 +343,44 @@ html, body {
 .btn-submit.loading .btn-text { opacity: 0; }
 .btn-submit.loading .spinner { display: block; position: absolute; }
 
-/* ─── SSO DIVIDER ─── */
+/* ─── DIVIDER ─── */
 .divider {
   display: flex; align-items: center; gap: 12px;
-  margin: 20px 0;
+  margin: 18px 0;
 }
 .divider::before, .divider::after {
   content: ''; flex: 1;
-  height: 1px; background: rgba(255,255,255,.15);
+  height: 1px; background: var(--border);
 }
-.divider span { color: rgba(255,255,255,.35); font-size: 12px; white-space: nowrap; }
+.divider span { color: var(--text-light); font-size: 12px; white-space: nowrap; }
 
+/* ─── SSO BTN ─── */
 .btn-sso {
   width: 100%; height: 42px;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,.25);
+  background: var(--bg-white);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius);
-  color: rgba(255,255,255,.75); font-size: 13px; font-weight: 500;
+  color: var(--text-sub); font-size: 13px; font-weight: 500;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 10px;
   transition: var(--transition);
+  font-family: inherit;
 }
 .btn-sso:hover {
-  background: rgba(255,255,255,.08);
-  border-color: rgba(255,255,255,.4);
-  color: #fff;
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
 }
-.btn-sso svg { width: 16px; height: 16px; opacity: .7; }
+.btn-sso svg { width: 15px; height: 15px; flex-shrink: 0; }
 
 /* ─── FIELD ERROR ─── */
 .field-err {
   display: none;
-  color: #fca5a5; font-size: 12px; margin-top: 5px;
+  color: var(--error); font-size: 12px; margin-top: 5px;
+  display: flex; align-items: center; gap: 4px;
 }
-.field-err.show { display: block; }
+.field-err.show { display: flex; }
+.field-err::before { content: '!'; width: 14px; height: 14px; border-radius: 50%; background: #fee2e2; color: var(--error); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
 /* ─── TOAST ─── */
 .toast-wrap {
@@ -337,7 +391,7 @@ html, body {
 }
 .toast {
   padding: 10px 20px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   font-size: 13px; font-weight: 500;
   color: #fff;
   pointer-events: all;
@@ -345,11 +399,12 @@ html, body {
   transition: opacity .25s, transform .25s;
   white-space: nowrap;
   min-width: 180px; text-align: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,.15);
 }
 .toast.show { opacity: 1; transform: translateY(0); }
-.toast.info  { background: rgba(21,101,192,.92); }
-.toast.error { background: rgba(185,28,28,.92); }
-.toast.success { background: rgba(5,150,105,.92); }
+.toast.info    { background: var(--primary); }
+.toast.error   { background: var(--error); }
+.toast.success { background: var(--success); }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -358,11 +413,9 @@ html, body {
   .brand-panel { display: none; }
   .login-side {
     width: 100%;
-    background: rgba(10,25,55,.88);
+    background: rgba(255,255,255,.96);
     border-left: none;
-  }
-  .bg-overlay {
-    background: rgba(8,28,64,.75);
+    box-shadow: none;
   }
 }
 </style>
@@ -379,26 +432,41 @@ html, body {
 </div>
 
 <div class="page">
-  <!-- Left brand panel -->
+  <!-- Left info panel -->
   <div class="brand-panel">
     <div class="brand-top">
       <div class="brand-logo">
         <div class="brand-logo-mark">
-          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+          <!-- truck / van icon -->
+          <svg viewBox="0 0 24 24">
+            <rect x="1" y="8" width="15" height="11" rx="1"/>
+            <path d="M16 8l3 3v8h-3V8z"/>
+            <circle cx="5.5" cy="19" r="1.5"/>
+            <circle cx="18.5" cy="19" r="1.5"/>
+          </svg>
         </div>
         <div>
-          <div class="brand-logo-text">BYD Commercial Vehicle</div>
+          <div class="brand-logo-text">商用车售后知识平台</div>
           <div class="brand-logo-sub">After-Sales Knowledge Platform</div>
         </div>
       </div>
 
       <div class="brand-headline">
-        售后知识<br>管理平台
+        售后知识<br>
+        管理平台
         <br><em>智能检索 · 精准响应</em>
       </div>
       <div class="brand-desc">
-        整合保养手册、质保规则、维修手册与典型案例，
-        为服务顾问、维修技师及售后工程师提供一站式知识检索与诊断辅助服务。
+        整合保养手册、质保规则、维修手册与典型案例，<br>
+        为服务顾问、维修技师及售后工程师提供<br>
+        一站式知识检索与诊断辅助服务。
+      </div>
+
+      <div class="brand-pills">
+        <span class="pill">📄 保养手册</span>
+        <span class="pill">🛡 质保规则</span>
+        <span class="pill">🔧 维修手册</span>
+        <span class="pill">💡 典型案例</span>
       </div>
 
       <div class="brand-stats">
@@ -418,7 +486,7 @@ html, body {
     </div>
 
     <div class="brand-footer">
-      &copy; 2026 比亚迪股份有限公司商用车事业部 &nbsp;·&nbsp; 保留所有权利
+      &copy; 2026 商用车售后知识管理平台 &nbsp;·&nbsp; 保留所有权利
     </div>
   </div>
 
@@ -426,8 +494,15 @@ html, body {
   <div class="login-side">
     <div class="login-card">
       <div class="card-header">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+        </div>
         <div class="card-title">账号登录</div>
-        <div class="card-sub">请使用企业账号或手机号登录</div>
+        <div class="card-sub">请使用企业账号或手机号登录系统</div>
       </div>
 
       <!-- Tab bar -->
@@ -481,7 +556,7 @@ html, body {
             <input type="checkbox" id="rememberMe">
             <span>记住账号</span>
           </label>
-          <a class="forgot-link" href="#" onclick="showToast('请联系系统管理员重置密码','info');return false;">忘记密码</a>
+          <a class="forgot-link" href="#" onclick="showToast('请联系系统管理员重置密码','info');return false;">忘记密码？</a>
         </div>
 
         <button class="btn-submit" id="btn-pwd-login">
@@ -510,7 +585,7 @@ html, body {
           <label class="form-label">验证码</label>
           <div class="input-wrap no-icon">
             <input class="form-input" id="sms-code" type="text"
-              placeholder="请输入验证码" maxlength="6" style="padding-left:12px">
+              placeholder="请输入验证码" maxlength="6">
             <div class="input-action">
               <button class="code-btn" id="btn-send-code" type="button">获取验证码</button>
             </div>
@@ -518,7 +593,7 @@ html, body {
           <div class="field-err" id="err-code">请输入验证码</div>
         </div>
 
-        <div style="margin-bottom:24px"></div>
+        <div style="margin-bottom:20px"></div>
 
         <button class="btn-submit" id="btn-sms-login">
           <span class="btn-text">登 录</span>
@@ -568,7 +643,7 @@ html, body {
 
   // ─── Remember account ───
   const accountInput = document.getElementById('pwd-account');
-  const savedAcc = localStorage.getItem('byd_account');
+  const savedAcc = localStorage.getItem('crm_account');
   if (savedAcc) {
     accountInput.value = savedAcc;
     document.getElementById('rememberMe').checked = true;
@@ -609,9 +684,9 @@ html, body {
     if (!password) { setErr('err-password', true); pwInput.classList.add('error'); ok = false; }
     if (!ok) return;
     if (document.getElementById('rememberMe').checked) {
-      localStorage.setItem('byd_account', account);
+      localStorage.setItem('crm_account', account);
     } else {
-      localStorage.removeItem('byd_account');
+      localStorage.removeItem('crm_account');
     }
     const btn = document.getElementById('btn-pwd-login');
     btn.classList.add('loading'); btn.disabled = true;
@@ -623,6 +698,7 @@ html, body {
   }
   document.getElementById('btn-pwd-login').addEventListener('click', handlePwdLogin);
   pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') handlePwdLogin(); });
+  accountInput.addEventListener('keydown', e => { if (e.key === 'Enter') handlePwdLogin(); });
 
   // ─── SMS code countdown ───
   let codeTimer = null;
@@ -638,7 +714,7 @@ html, body {
     const btn = document.getElementById('btn-send-code');
     let sec = 60;
     btn.disabled = true; btn.textContent = sec + 's后重发';
-    showToast('验证码已发送', 'success');
+    showToast('验证码已发送至手机', 'success');
     codeTimer = setInterval(() => {
       sec--;
       btn.textContent = sec + 's后重发';
@@ -672,6 +748,7 @@ html, body {
     }, 1000);
   }
   document.getElementById('btn-sms-login').addEventListener('click', handleSmsLogin);
+  document.getElementById('sms-code').addEventListener('keydown', e => { if (e.key === 'Enter') handleSmsLogin(); });
 
   // ─── SSO ───
   document.getElementById('btn-sso').addEventListener('click', () => {
