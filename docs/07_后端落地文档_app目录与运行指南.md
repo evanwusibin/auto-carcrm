@@ -1,6 +1,6 @@
 # 后端落地指南：`app/` 目录结构与运行配置
 
-> 文档编号：DOC-07-01 | 版本：v1.1 | 更新时间：2026-06-12
+> 文档编号：DOC-07-01 | 版本：v1.2 | 更新时间：2026-06-12
 > 适用项目：商用车智能售后诊断与报修知识助手（RAG）
 
 ---
@@ -18,13 +18,14 @@
 1. 知识库导入链路跑通：上传 → 解析 → 清洗 → 切块 → 向量化 → 写入 → 索引 → 审核发布
 2. 在线问答链路跑通：提问 → 意图识别 → 实体抽取 → 四路混合检索 → 融合 → Rerank → Prompt → LLM → 引用溯源
 3. 业务闭环跑通：车辆 → 诊断 → 质保预判 → 报修 → 案例沉淀
-4. 全链路用 `.env` 统一配置；保留 `MongoDB + MinIO + BGE-M3 + bge-reranker + Qwen/DeepSeek` 的整体技术方向
+4. 全链路用 `.env` 统一配置；保留 `MongoDB + MinIO + BGE-M3 + bge-reranker + mimo-v2.5-pro` 的整体技术方向
 
-> 本次更新说明：
-> - 本文**不再要求 `app/` 完全贴合当前模板目录**。
-> - 目录设计优先服从 `docs/` 和 `flows/` 里定义的业务链路、状态流转和接口边界。
-> - 模板里成熟可复用的部分继续保留，例如：`LangGraph`、`BGE-M3`、`bge-reranker`、`MinIO`、`MinerU`、`SSE`、已有的日志与配置加载方式。
-> - 向量库层建议做成**可替换适配层**。默认推荐按项目文档优先使用 `MongoDB Atlas Vector Search` 设计；如果你当前阶段想沿用模板里的 `Milvus`，只需要替换 `app/infra/vectorstore/` 实现，不影响上层服务与流程编排。
+> 本次更新说明（v1.2 2026-06-12）：
+> - **路由拆分**：`app/api/http/*_server.py` 保留为「兼容/调试」子服务，默认不启动；业务接口统一按领域拆到 `app/api/routers/{chat,import_kb,knowledge,qa,vehicle,warranty,diagnosis,repair,health}.py`，由 `app/api/routers/__init__.py::build_api_router()` 统一加 `/api/v1` 前缀。
+> - **页面层 (Page)**：在 router 与 graph 之间增补 `app/process/{query,import_}/page/{query_page,import_page}.py`，把「状态/历史/审计/可观测指标」与「调 LangGraph」封装为可复用类。Router 不再直接调图。
+> - **统一入口**：`app/main.py` 已是唯一启动入口（`python app/main.py`），不推荐再以 `python -m app.api.http.import_server` 启动（仍保留以供调试）。
+> - **三层调用链**：`HTTP → R-* (router) → P-* (page) → G-* (graph) → RAG-* (节点) → LLM/向量库/外部服务`，详见本文“二、目录结构 / 三、调用链总览”两节。
+> - **模型切换**：默认 LLM 切到小米 mimo（`mimo-v2.5-pro` 文本 / `mimo-v2-omni` 视觉），`VL_ENABLED` 总开关可一键降级为纯文本。
 
 ### 1.1 本文优化原则
 
@@ -57,15 +58,22 @@ auto-carcrm/
 │   │
 │   ├── api/                          # ✅ 已存在，接口层
 │   │   ├── __init__.py               # ✅ 已存在
-│   │   ├── http/                     # ✅ 已存在
+│   │   ├── routers/                  # ✅ 已存在 · 业务路由拆分（核心入口）
+│   │   │   ├── __init__.py           # build_api_router() 聚合器，加 /api/v1 前缀
+│   │   │   ├── health.py             # ✅ 已存在 · /health 探活（不带前缀）
+│   │   │   ├── chat.py               # ✅ 已存在 · /api/v1/chat 问答 + SSE + 历史
+│   │   │   ├── import_kb.py          # ✅ 已存在 · /api/v1 知识库上传 / 进度 / 发布
+│   │   │   ├── knowledge.py          # ✅ 已存在 · /api/v1 知识库管理
+│   │   │   ├── qa.py                 # ✅ 已存在 · /api/v1 QA 会话 / 反馈
+│   │   │   ├── vehicle.py            # ✅ 已存在 · /api/v1 车辆档案
+│   │   │   ├── warranty.py           # ✅ 已存在 · /api/v1 质保预判
+│   │   │   ├── diagnosis.py          # ✅ 已存在 · /api/v1 智能诊断
+│   │   │   └── repair.py             # ✅ 已存在 · /api/v1 报修工单
+│   │   │
+│   │   ├── http/                     # ✅ 已存在 · 仅作兼容/调试，默认不启动
 │   │   │   ├── __init__.py           # ✅ 已存在
-│   │   │   ├── import_server.py      # ✅ 已存在 → ✏️ 改写：挂载 /api/v1/knowledge 业务路由
-│   │   │   ├── query_server.py       # ✅ 已存在 → ✏️ 改写：挂载 /api/v1/qa 业务路由
-│   │   │   ├── vehicle_server.py     # 🆕 新增：车辆接口
-│   │   │   ├── repair_server.py      # 🆕 新增：报修工单接口
-│   │   │   ├── warranty_server.py    # 🆕 新增：质保预判接口
-│   │   │   ├── diagnosis_server.py   # 🆕 新增：智能诊断接口
-│   │   │   └── knowledge_admin_server.py  # 🆕 新增：知识库管理接口（CRUD/审核/发布）
+│   │   │   ├── import_server.py      # ✅ 已存在 → ✏️ 改写：独立导入子系统（调试）
+│   │   │   └── query_server.py       # ✅ 已存在 → ✏️ 改写：独立问答子系统（调试）
 │   │   │
 │   │   └── schemas/                  # ✅ 已存在
 │   │       ├── __init__.py           # ✅ 已存在
@@ -112,11 +120,14 @@ auto-carcrm/
 │   │       ├── __init__.py
 │   │       └── milvus_gateway.py     # ✅ 已存在 → ✏️ 增加 metadata 过滤能力
 │   │
-│   ├── process/                      # ✅ 已存在，图编排层（LangGraph）
+│   ├── process/                      # ✅ 已存在，页面层 P-* + 图编排层 G-*
 │   │   ├── __init__.py
 │   │   ├── import_/                  # 导入流程
 │   │   │   ├── __init__.py
-│   │   │   └── agent/
+│   │   │   ├── page/                 # ✅ 已存在 · 页面层 P-IM
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── import_page.py    # 加载身份/上传落盘/调 kb_import_app/写状态与审计
+│   │   │   └── agent/                # ✅ 已存在 · 图编排层 G-IM（LangGraph）
 │   │   │       ├── __init__.py
 │   │   │       ├── main_graph.py     # ✅ 已存在 → ✏️ 增加 doc_meta 节点、知识审核发布节点
 │   │   │       ├── state.py          # ✅ 已存在 → ✏️ 增 vehicle_model/doc_type/version 等元数据
@@ -134,7 +145,10 @@ auto-carcrm/
 │   │   │           └── node_publish.py           # 🆕 新增：审核发布切换 state
 │   │   └── query/                    # 查询流程
 │   │       ├── __init__.py
-│   │       └── agent/
+│   │       ├── page/                 # ✅ 已存在 · 页面层 P-QA
+│   │       │   ├── __init__.py
+│   │       │   └── query_page.py     # 加载身份/会话/历史/调 query_graph_app/回写
+│   │       └── agent/                # ✅ 已存在 · 图编排层 G-QA（LangGraph）
 │   │           ├── __init__.py
 │   │           ├── main_graph.py     # ✅ 已存在 → ✏️ 重写为「四路并行 + 业务融合」
 │   │           ├── state.py          # ✅ 已存在 → ✏️ 增 vehicle_id/intent/extracted_entities/metadata_filter
@@ -260,7 +274,7 @@ auto-carcrm/
 │   │       ├── time_utils.py            # 🆕 新增：质保期/保养周期计算
 │   │       └── retry_utils.py           # 🆕 新增：LLM/Milvus 通用重试
 │   │
-│   └── main.py                       # 🆕 新增：统一入口（挂载所有路由/中间件/lifespan）
+│   └── main.py                       # ✅ 已存在 · 唯一启动入口（python app/main.py）
 │
 ├── docs/                             # ✅ 文档（已就位）
 │   └── 07_后端落地文档_app目录与运行指南.md  # 🆕 即本文
@@ -308,14 +322,20 @@ QUERY_APP_PORT=8001
 CORS_ORIGINS=*
 
 # =========================
-# LLM / VL 模型配置（兼容 OpenAI 协议）
+# LLM / VL 模型配置（兼容 OpenAI 协议 — 默认使用小米 mimo）
 # =========================
-OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-OPENAI_API_KEY=sk-your-key
-LLM_DEFAULT_MODEL=qwen-plus
-LLM_VL_MODEL=qwen-vl-max
+OPENAI_BASE_URL=https://token-plan-cn.xiaomimimo.com/v1
+OPENAI_API_KEY=sk-your-mimo-key
+# 文本 LLM
+LLM_DEFAULT_MODEL=mimo-v2.5-pro
+# 视觉 LLM（可由 VL_ENABLED 一键降级）
+LLM_VL_MODEL=mimo-v2-omni
+# 总开关：true=调用视觉模型；false=强制走纯文本路径（任何 vision_chat 返回 None）
+VL_ENABLED=true
 LLM_DEFAULT_TEMPERATURE=0.1
 LLM_MAX_TOKENS=2048
+LLM_TIMEOUT_SECONDS=60
+LLM_MAX_RETRIES=2
 
 # =========================
 # Embedding（BGE-M3 稠密+稀疏）
@@ -429,11 +449,109 @@ PROJECT_ROOT=
 
 ### 4.1 入口与配置层
 
-#### `app/main.py` 🆕
-- 用单一入口同时挂载 import / query / vehicle / repair / warranty / diagnosis / knowledge_admin 等所有路由（避免多进程启动混乱）
-- 注册 `core.lifespan`：`on_startup` 时初始化 Milvus 集合、Mongo 索引、Embedding/Reranker 单例；`on_shutdown` 关闭连接
-- 注册全局异常处理 `core.exceptions`
-- 注册统一响应中间件 `core.response`
+#### `app/main.py` ✅ 已存在 · ✏️ 调整
+- 唯一启动入口：`python app/main.py`（开发/生产均推荐）
+- 内部不直接 `import_graph/query_graph`；仅调 `app.api.routers.build_api_router()` 统一加 `/api/v1` 前缀
+- 注册顺序：CORS 中间件 → 响应中间件 `core.response.install_response_middleware` → 异常处理 `core.exceptions.register_exception_handlers` → `app.include_router(build_api_router())` → `lifespan` 初始化
+- 主机/端口读自 `settings.app_host` / `settings.import_app_port`（环境变量 `APP_HOST` / `IMPORT_APP_PORT`）
+- 现有实现参考（`app/main.py` 全文）：
+
+```python
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.routers import build_api_router
+from app.core.exceptions import register_exception_handlers
+from app.core.response import install_response_middleware
+from app.shared.config.settings_config import settings
+from app.core.lifespan import lifespan
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title='AutoCarCRM Backend',
+        version='0.1.0',
+        description='商用车售后诊断与报修知识助手后端服务',
+        lifespan=lifespan,
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(settings.cors_origins) or ['*'],
+        allow_methods=['*'],
+        allow_headers=['*'],
+        allow_credentials=True,
+    )
+    install_response_middleware(app)
+    register_exception_handlers(app)
+    app.include_router(build_api_router())
+    return app
+
+
+app = create_app()
+
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(
+        app,
+        host=settings.app_host,
+        port=settings.import_app_port,
+        log_level='info',
+    )
+```
+
+#### `app/api/routers/__init__.py` ✅ 已存在
+- 聚合器函数 `build_api_router()` 把各业务子路由统一加 `/api/v1` 前缀
+- `health` 路由不带前缀，K8s / Nginx 可直接探活
+- 现有实现参考（`app/api/routers/__init__.py` 全文）：
+
+```python
+from fastapi import APIRouter
+
+from app.api.routers.chat import router as chat_router
+from app.api.routers.diagnosis import router as diagnosis_router
+from app.api.routers.health import router as health_router
+from app.api.routers.import_kb import router as import_kb_router
+from app.api.routers.knowledge import router as knowledge_router
+from app.api.routers.qa import router as qa_router
+from app.api.routers.repair import router as repair_router
+from app.api.routers.vehicle import router as vehicle_router
+from app.api.routers.warranty import router as warranty_router
+
+
+def build_api_router() -> APIRouter:
+    router = APIRouter()
+    router.include_router(health_router)                    # 探活不加前缀
+    for r in (knowledge_router, import_kb_router, qa_router,
+              chat_router, vehicle_router, warranty_router,
+              diagnosis_router, repair_router):
+        router.include_router(r, prefix='/api/v1')
+    return router
+```
+
+> 后续若新增业务域（如 `app/api/routers/case.py`），只需要在 `app/api/routers/` 下新增文件并注册到 `build_api_router()`，主程序不动。
+
+#### 三层调用链总览
+
+```
+HTTP Request
+  → R-* （路由层 app/api/routers/*.py）
+     · 参数解析 / 鉴权 / 依赖注入 / 响应包装
+     · 不直接调 LangGraph、不直接写状态
+  → P-* （页面层 app/process/{query,import_}/page/*_page.py）
+     · 加载身份/会话/历史/租户上下文
+     · 调图：query_graph_app.invoke / kb_import_app.invoke
+     · 图结果回写：Mongo 历史 / 审计 / 可观测指标
+  → G-* （图编排层 app/process/{query,import_}/agent/main_graph.py）
+     · LangGraph StateGraph
+     · 跨节点共享 QueryState / ImportState（TypedDict）
+  → RAG-* （业务节点 app/rag/{query,import_}/*.py）
+     · 拼 Prompt / 调 LLM / 查 Milvus / 读 MinIO
+  → infra/ （基础设施 app/infra/**）
+     · llm/providers · vectorstore/milvus_gateway · object_stroage/minio_gateway · persistence/*_repository
+```
+
+> 任何业务接口都应遵守此链：Router 只做“翻译 HTTP”，Page 只做“调度与状态托管”，Graph 只做“有向无环任务编排”，RAG 节点只做“单一原子能力”。
 
 #### `app/core/lifespan.py` 🆕
 ```python
@@ -462,47 +580,45 @@ async def lifespan(app: FastAPI):
 
 ### 4.2 接口层（`app/api/`）
 
-#### `app/api/http/import_server.py` ✏️ 改写
-- 保留 `/upload`、`/status/{task_id}`、`/html`
-- 增加业务路由（建议改成「挂载到子应用」或被 `main.py` 统一挂载）：
-  - `POST /api/v1/knowledge/documents/upload` → 复用 `invoke_graph`
-  - `POST /api/v1/knowledge/documents/parse` → 触发解析（对已上传的 doc）
-  - `GET  /api/v1/knowledge/documents/{doc_id}` → 文档详情
-  - `GET  /api/v1/knowledge/documents` → 列表/分页
-  - `POST /api/v1/knowledge/documents/{doc_id}/publish` → 审核发布
-  - `POST /api/v1/knowledge/documents/{doc_id}/offline` → 下线
-  - `GET  /api/v1/knowledge/import-tasks/{task_id}` → 进度
+> 拆层原则：**R-* (router) 只做 HTTP 翻译 → P-* (page) 负责调度与状态托管 → G-* (graph) 是状态机。** Router 不再直接 import `app.process.*.agent.main_graph`。
+>
+> 业务接口按领域拆在 `app/api/routers/*.py`；`app/api/http/*_server.py` 保留作为历史兼容/调试入口，默认不启动。
 
-#### `app/api/http/query_server.py` ✏️ 改写
-- 保留 `/query`、`/stream/{session_id}`、`/history/{session_id}`、`DELETE /history/{session_id}`、`/html`
-- 增加业务路由：
-  - `POST /api/v1/qa/ask` → 走 query_graph
-  - `POST /api/v1/qa/feedback` → `user_feedbacks` 落库
-  - `GET  /api/v1/qa/sessions/{session_id}` → 历史
+#### `app/api/routers/` 业务路由拆分（已存在 · ✅）
 
-#### `app/api/http/vehicle_server.py` 🆕
-- `GET /api/v1/vehicles/{vehicle_id}`
-- `GET /api/v1/vehicles/by-vin/{vin}`
-- `GET /api/v1/vehicles/{vehicle_id}/maintenance-records`
-- `POST /api/v1/vehicles/{vehicle_id}/maintenance-check` → 触发 `domain.maintenance_service`
+| 文件 | 前缀 | 职责 | 主要调用 Page |
+|---|---|---|---|
+| `health.py` | （无） | 探活 `/health` | — |
+| `chat.py` | `/api/v1/chat` | 问答主入口 + SSE + 历史 + chat.html | `query_page.ask / get_history / clear_history` |
+| `import_kb.py` | `/api/v1` | 文档上传 / 解析进度 / 发布 | `import_page.upload / status / publish` |
+| `knowledge.py` | `/api/v1` | 知识库管理 / 列表 / 详情 | `domain` 服务 |
+| `qa.py` | `/api/v1` | QA 会话 / 反馈 | `query_page` / `domain` |
+| `vehicle.py` | `/api/v1` | 车辆档案 / VIN 查询 / 保养检查 | `domain.maintenance_service` |
+| `warranty.py` | `/api/v1` | 质保预判 | `domain.warranty_service` |
+| `diagnosis.py` | `/api/v1` | 智能诊断 | `domain.diagnosis_service` |
+| `repair.py` | `/api/v1` | 报修单 / 派单 / 结论 | `domain.repair_service` |
 
-#### `app/api/http/warranty_server.py` 🆕
-- `POST /api/v1/warranty/precheck` → 触发 `domain.warranty_service`，返回 `PreCheckResult` 四档枚举
+#### `app/api/routers/chat.py` ✅ 已存在（参考实现）
+- 核心点：**从不直接 `import main_graph`**；所有能力都委托给 `app.process.query.page.query_page.query_page` 这个单例
+- 接口清单（已实现）：
+  - `POST   /api/v1/chat/query`               触发一次问答
+  - `GET    /api/v1/chat/stream/{session_id}` SSE 订阅
+  - `GET    /api/v1/chat/history/{session_id}` 拉历史
+  - `DELETE /api/v1/chat/history/{session_id}` 清历史
+  - `GET    /api/v1/chat/html`                chat.html 测试页
+- 鉴权：`Depends(get_current_user)` 注入 `CurrentUser`
+- SSE 工具：`app.shared.utils.sse_utils.sse_generator(session_id, request)` 推流
 
-#### `app/api/http/diagnosis_server.py` 🆕
-- `POST /api/v1/diagnosis/run` → 触发 `domain.diagnosis_service`，返回 `risk_level` + `possible_causes` + `suggestion`
-- `POST /api/v1/diagnosis/{session_id}/convert-to-repair` → 把诊断会话转报修单
+#### `app/api/routers/import_kb.py` ✅ 已存在
+- 上传 / 进度 / 发布 / 下线 / 列表 全在 `import_page` 里
+- 鉴权同上；不直接调 `kb_import_app`
 
-#### `app/api/http/repair_server.py` 🆕
-- `POST /api/v1/repair-orders` → 创建报修单
-- `GET  /api/v1/repair-orders/{order_id}`
-- `PATCH /api/v1/repair-orders/{order_id}/state` → 状态流转
-- `POST /api/v1/repair-orders/{order_id}/conclusion` → 提交维修结论
+#### `app/api/http/import_server.py` 🆕→✏️ （仅作兼容/调试）
+- 保留作为独立子服务：`python -m app.api.http.import_server` 可启动仅含导入的子系统
+- 生产环境不推荐走这个入口
 
-#### `app/api/http/knowledge_admin_server.py` 🆕
-- 管理员对 `typical_cases` 审核发布
-- `GET/POST/PUT /api/v1/cases`
-- `POST /api/v1/cases/{case_id}/publish`
+#### `app/api/http/query_server.py` 🆕→✏️ （仅作兼容/调试）
+- 同上，仅调试用
 
 #### `app/api/schemas/*.py`
 - `import_schema.py` ✏️：增加 `doc_type`、`vehicle_model`、`component`、`version`、`effective_date`、`expire_date`、`visible_roles`
@@ -655,10 +771,15 @@ async def lifespan(app: FastAPI):
         ▼
   node_intent_recognition ── node_entity_extraction ── node_metadata_filter
                                                               │
-            ┌───────────────┬───────────────┬───────────────┴──────────────┐
-            ▼               ▼               ▼                              ▼
-   node_search_embedding  node_keyword_search  node_structured_query    node_case_search
-            └───────────────┴───────────────┴──────────────────────────────┘
+            ┌───────────────┬───────────────┬───────────────┬──────────────┐
+            ▼               ▼               ▼               ▼              ▼
+   node_search_embedding  node_keyword_search  node_structured_query  node_case_search  [可选旁路]
+            │               │               │               │              │
+            │               │               │               │        ┌─────┴─────┐
+            │               │               │               │        ▼           ▼
+            │               │               │               │  node_search_hyde  node_web_search
+            │               │               │               │        │           │
+            └───────────────┴───────────────┴───────────────┴────────┴───────────┘
                                           ▼
                                   node_rrf（融合）
                                           ▼
@@ -672,6 +793,8 @@ async def lifespan(app: FastAPI):
                                   ▼
                                 node_save_qa
   ```
+- **四路必选**：`node_search_embedding`（向量）、`node_keyword_search`（BM25）、`node_structured_query`（结构化）、`node_case_search`（案例）
+- **两路可选**：`node_search_hyde`（HyDE，`RAG_ENABLE_HYDE` 控制）、`node_web_search`（Web搜索，`RAG_ENABLE_WEB` 控制）
 - 关键：`node_intent_recognition` 和 `node_entity_extraction` 是**新增**的核心节点；融合阶段使用 `RRF` 取代模板里简单的 `WeightRanker`
 - 引用：把 `state.references` 一并写入 `qa_references` 集合
 
@@ -768,13 +891,15 @@ async def lifespan(app: FastAPI):
 
 ## 五、运行步骤
 
+> **开发与生产均推荐 `python app/main.py` 一键启动**；它会一次性拉起全部业务路由（探活 + 8 个领域）。`app/api/http/*_server.py` 保留作为独立调试子服务，不再是默认启动项。
+
 ```bash
 # 1. 安装依赖（项目已用 uv）
 uv sync
 
 # 2. 复制环境变量
 cp .env.example .env
-# 填入 OPENAI_API_KEY、MINERU_API_TOKEN、Milvus/Mongo/MinIO 地址等
+# 填入 OPENAI_API_KEY（mimo）、MINERU_API_TOKEN、Milvus/Mongo/MinIO 地址等
 
 # 3. 启动基础设施
 docker compose -f docker/docker-compose.yml up -d milvus mongo minio
@@ -784,15 +909,20 @@ uv run python scripts/init_milvus_collections.py
 uv run python scripts/init_mongo_collections.py
 uv run python scripts/seed_demo_data.py
 
-# 5. 启动两个服务（开发模式）
-uv run python -m app.api.http.import_server
-uv run python -m app.api.http.query_server
+# 5. 一键启动后端（统一入口）
+uv run python app/main.py
+# 另起一个终端调试
+uv run python -m app.api.http.import_server   # 仅导入子系统（调试）
+uv run python -m app.api.http.query_server    # 仅问答子系统（调试）
 
 # 6. 打开前端原型
-# 浏览器：frontend/login.html
+# 浏览器：http://localhost:8000/api/v1/chat/html    （chat.html）
+#         http://localhost:8000/api/v1/knowledge/import/html （import.html）
+# 探活    ：http://localhost:8000/health
+# OpenAPI ：http://localhost:8000/docs
 ```
 
-> 生产环境建议用 `app/main.py` 统一入口，配合 `uvicorn` + `gunicorn` 多 worker。
+> 生产环境建议 `uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4` 配合 Nginx。
 
 ---
 
@@ -822,4 +952,6 @@ uv run python -m app.api.http.query_server
 
 ---
 
-*文档版本：v1.0 | 更新时间：2026-06-12*
+*文档版本：v1.2 | 更新时间：2026-06-12*
+
+> 变更说明（v1.2）：补充“三层调用链”小节与「R- / P- / G-」分层原则；4.1 入口与配置层重写以反映 `app/main.py` + `app/api/routers/__init__.py::build_api_router()` 现状；4.2 接口层重写为「按业务域拆 `app/api/routers/{chat,import_kb,…}.py`」并指出 `app/api/http/*_server.py` 仅作兼容/调试；三、.env 切到小米 mimo（`mimo-v2.5-pro` 文本 / `mimo-v2-omni` 视觉）并补 `VL_ENABLED` 开关；五、运行步骤统一为 `python app/main.py`。

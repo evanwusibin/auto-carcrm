@@ -5,13 +5,14 @@
   1) 文本模型 mimo-v2.5-pro  —— 简单中文问答
   2) 文本模型 JSON 模式       —— 结构化输出
   3) 视觉功能总开关           —— VL_ENABLED=false 时 vision_chat() 返回 None
-  4) 视觉模型纯文本调用        —— 仅在 VL_ENABLED=true 时执行
-  5) 视觉模型图像理解          —— 仅在 VL_ENABLED=true 时执行
+  4) 视觉模型 mimo-v2-omni    —— 真实图片理解（PIL 现生成 PNG）
 
 每次调用都打印：模型名 → 状态 → 返回内容/异常，方便您快速判断是哪一段没通。
 """
 from __future__ import annotations
 
+import base64
+import io
 import sys
 import traceback
 from pathlib import Path
@@ -29,6 +30,23 @@ from langchain_core.messages import HumanMessage  # noqa: E402
 TINY_PNG_B64 = (
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
 )
+
+
+def make_test_png_b64() -> str:
+    """用 PIL 生成一张 64x64 上红下蓝的 PNG，转 base64 供视觉测试用。
+
+    注意：mimo-v2-omni / mimo-v2.5 都会在 response 之前先做一次思维链（reasoning），
+    故 max_tokens 需 ≥ 200，否则 content 会返空。
+    """
+    from PIL import Image, ImageDraw  # 延后导入，未启用视觉的环境也能跑文本用例
+
+    img = Image.new("RGB", (64, 64), (255, 255, 255))
+    d = ImageDraw.Draw(img)
+    d.rectangle([4, 4, 60, 30], fill=(220, 30, 30))      # 上半红
+    d.rectangle([4, 34, 60, 60], fill=(30, 100, 220))    # 下半蓝
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return base64.b64encode(buf.getvalue()).decode()
 
 
 def banner(title: str) -> None:
@@ -69,34 +87,25 @@ def run_vl_switch() -> None:
         print("  ✅ vision_chat() 正确返回 None（业务侧应走纯文本降级）")
 
 
-def run_vl_text() -> None:
-    banner("④ 视觉模型 · 当作纯文本端点")
-    if not is_vl_enabled():
-        print("  ⏭️  跳过（VL_ENABLED=false）")
-        return
-    client = get_llm_client(model=lm_config.lv_model)
-    print(f"  模型: {client.model_name}")
-    resp = client.invoke([HumanMessage(content="只回 'pong' 一个词。")])
-    print(f"  ✅ 返回: {resp.content}")
-
-
 def run_vl_image() -> None:
-    banner("⑤ 视觉模型 · 图像理解")
+    banner("④ 视觉模型 mimo-v2-omni · 图像理解")
     if not is_vl_enabled():
         print("  ⏭️  跳过（VL_ENABLED=false）")
         return
     client = get_llm_client(model=lm_config.lv_model)
     print(f"  模型: {client.model_name}")
+    b64 = make_test_png_b64()
     msg = HumanMessage(
         content=[
-            {"type": "text", "text": "请用中文告诉我这张图片的尺寸和主色调。"},
+            {"type": "text", "text": "请用中文一句话告诉我这张图片的颜色组合。"},
             {
                 "type": "image_url",
-                "image_url": {"url": f"data:image/png;base64,{TINY_PNG_B64}"},
+                "image_url": {"url": f"data:image/png;base64,{b64}"},
             },
         ]
     )
-    resp = client.invoke([msg])
+    # mimo-v2-omni 会先做 reasoning，所以 max_tokens 要够大
+    resp = client.invoke([msg], max_tokens=300)
     print(f"  ✅ 返回: {resp.content}")
 
 
@@ -111,7 +120,6 @@ def main() -> int:
         ("文本对话", run_text),
         ("JSON 模式", run_json),
         ("VL 开关", run_vl_switch),
-        ("VL 纯文本", run_vl_text),
         ("VL 图像理解", run_vl_image),
     ]
 

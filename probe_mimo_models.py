@@ -3,9 +3,9 @@
 """
 import os
 import requests
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv()
+load_dotenv(find_dotenv(), override=True)
 base = os.environ.get("OPENAI_BASE_URL", "https://token-plan-cn.xiaomimimo.com/v1").rstrip("/")
 key = os.environ.get("OPENAI_API_KEY", "")
 

@@ -1,6 +1,6 @@
 # RAG 生成回答流程
 
-> 流程编号：FLOW-02-02 | 版本：v1.0 | 更新时间：2026-06-12
+> 流程编号：FLOW-02-02 | 版本：v1.1 | 更新时间：2026-06-12
 
 ---
 
@@ -8,7 +8,18 @@
 
 ```mermaid
 flowchart TD
-    A[检索完成 获得 Top-K 候选资料] --> B[按相关性排序]
+    %% ====== 三层调用链（外 → 内）======
+    HTTP[HTTP 请求<br/>POST /api/v1/chat/query] --> R-QA[路由层 R-QA<br/>app/api/routers/chat.py<br/>参数解析 / 鉴权 / SSE 订阅 / 响应包装]
+    R-QA --> P-QA[页面层 P-QA<br/>app/process/query/page/query_page.py<br/>流式分支 / 后台调度 / 历史 / SSE 推送]
+    P-QA --> G-QA[图编排层 G-QA<br/>app/process/query/agent/main_graph.py<br/>query_graph_app.invoke]
+    G-QA --> A[用户问题]
+    A --> A1[意图识别]
+    A1 --> A2[实体抽取]
+    A2 --> A3[多路混合检索]
+    A3 --> A4[合并去重]
+    A4 --> A5[元数据过滤]
+    A5 --> A6[Rerank 重排序]
+    A6 --> B[按相关性排序]
     B --> C[选择最终上下文 Top-5 Chunk]
 
     C --> D[组装 Prompt]
@@ -135,4 +146,31 @@ def format_context(chunks: list) -> str:
 
 ---
 
-*流程版本：v1.0 | 更新时间：2026-06-12*
+## 三层调用节点说明（外 → 内）
+
+### R-QA 路由层（`app/api/routers/chat.py`）
+- 路由定义：
+  - `POST   /api/v1/chat/query`              触发问答（同步 / SSE）
+  - `GET    /api/v1/chat/stream/{session_id}`  SSE 事件订阅
+  - `GET    /api/v1/chat/history/{session_id}`  历史拉取
+  - `DELETE /api/v1/chat/history/{session_id}`  历史清空
+  - `GET    /api/v1/chat/html`               对话测试页
+- 职责：**只做** HTTP 边界处理——参数解析、用户鉴权、调用 page 层、SSE 包装、响应封装；**不接触** LangGraph / LangChain / Mongo。
+
+### P-QA 页面层（`app/process/query/page/query_page.py`）
+- 入口方法：`QueryPage.ask(query, session_id, is_stream, background_tasks, user_id)`
+  - `is_stream=False` ：同步执行 `query_graph_app.invoke()`，直接返回 `answer + image_urls`
+  - `is_stream=True`  ：创建 SSE 队列 → 调度后台任务 → 返回 `session_id`，前端用 EventSource 订阅 `/chat/stream/{session_id}`
+- 出口方法：
+  - `QueryPage.get_history(session_id, limit)` → 调 `history_repository.list_recent`
+  - `QueryPage.clear_history(session_id)`     → 调 `history_repository.clear_session`
+- （TODO 业务点）意图分流到 `domain/diagnosis_service` / `domain/repair_service` / `domain/warranty_service`
+
+### G-QA 图编排层（`app/process/query/agent/main_graph.py`）
+- LangGraph 编译产物：`query_graph_app`（`StateGraph` 编译后实例）
+- 由 page 层 `_invoke_graph()` 通过 `query_graph_app.invoke(state)` 调用
+- 返回 final state 后，page 层再 `update_task_status(session_id, COMPLETED/FAILED)`，并对流式分支 push `SSEEvent.FINAL` / `SSEEvent.ERROR`
+
+---
+
+*流程版本：v1.1 | 更新时间：2026-06-12*

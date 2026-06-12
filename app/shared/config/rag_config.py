@@ -1,7 +1,7 @@
-﻿"""RAG 配置。"""
+"""RAG 配置。"""
 from dataclasses import dataclass
 
-from app.shared.config.common import env_float, env_int
+from app.shared.config.common import env_float, env_int, env_bool
 
 
 @dataclass
@@ -13,6 +13,8 @@ class RagConfig:
     confidence_threshold: float
     rrf_k: int
     max_context_chars: int
+    enable_hyde: bool
+    enable_web: bool
 
 
 rag_config = RagConfig(
@@ -23,4 +25,6 @@ rag_config = RagConfig(
     confidence_threshold=env_float('RAG_CONFIDENCE_THRESHOLD', 0.55),
     rrf_k=env_int('RAG_RRF_K', 60),
     max_context_chars=env_int('RAG_MAX_CONTEXT_CHARS', 10000),
+    enable_hyde=env_bool('RAG_ENABLE_HYDE', False),
+    enable_web=env_bool('RAG_ENABLE_WEB', False),
 )
