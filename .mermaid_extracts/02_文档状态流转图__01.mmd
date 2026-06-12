@@ -1,0 +1,11 @@
+stateDiagram-v2
+    [*] --> active : 文档发布后 Chunks 激活
+
+    active --> inactive : 文档下线
+    inactive --> active : 文档重新上线
+
+    active --> reindexing : 触发重新索引
+    reindexing --> active : 重新索引完成
+
+    active --> deleted : 文档删除/版本替换
+    inactive --> deleted : 文档删除

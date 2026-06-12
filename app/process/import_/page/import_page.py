@@ -145,6 +145,7 @@ class ImportPage:
             local_dir=str(local_dir),
         )
         try:
+            # update_task_status(task_id, TASK_STATUS_PROCESSING)
             update_task_status(task_id, TASK_STATUS_PROCESSING)
             logger.info(f"[ImportPage] 导入图开始执行 task_id={task_id}")
             final_state = kb_import_app.invoke(state)

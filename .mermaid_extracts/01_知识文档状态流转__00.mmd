@@ -1,0 +1,25 @@
+stateDiagram-v2
+    [*] --> uploaded : 📤 管理员上传文件
+
+    uploaded --> parsing : ▶️ 触发解析任务
+    parsing --> parsed : ✅ 解析成功
+    parsing --> failed : ❌ 解析失败
+
+    parsed --> cleaning : 文本清洗
+    cleaning --> splitting : 文本切分
+    splitting --> embedding : Embedding 向量化
+    embedding --> indexing : 写入向量索引
+
+    indexing --> pending_review : ✅ 索引完成，待审核
+    indexing --> failed : ❌ 索引失败
+
+    pending_review --> published : ✅ 审核通过
+    pending_review --> rejected : ❌ 审核驳回
+
+    rejected --> uploaded : 🔄 修改后重新上传
+    failed --> uploaded : 🔄 修复后重试
+
+    published --> offline : 📴 手动下线
+    offline --> published : 🔄 重新上线
+
+    published --> [*]

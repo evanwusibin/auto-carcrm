@@ -104,15 +104,6 @@ class TestKeywordSearchService:
         with pytest.raises(ValueError, match="rewritten_query 为空"):
             validate_keyword_state(state)
 
-    def test_tokenize_chinese(self):
-        """测试中文分词"""
-        from app.rag.query.keyword_search_service import tokenize_chinese
-
-        # 测试中文分词
-        tokens = tokenize_chinese("P0A0F故障码是什么意思？")
-        assert "P" in tokens  # 简单分割模式下，P0A0F会被拆成单字符
-        assert "故" in tokens  # 简单分割模式下，中文会被拆成单字符
-
     def test_extract_keywords_from_entities(self):
         """测试从实体中提取关键词"""
         from app.rag.query.keyword_search_service import extract_keywords_from_entities

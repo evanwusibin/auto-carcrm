@@ -2,6 +2,7 @@
 """
 结构化查询服务
 作用：查询车辆档案、保养记录、质保规则等结构化数据
+参考老师 answer_service.py 的代码风格
 """
 from app.shared.runtime.logger import logger, step_log
 from app.process.query.agent.state import QueryGraphState
@@ -12,6 +13,7 @@ def validate_structured_state(state: QueryGraphState):
     """校验结构化查询所需参数"""
     rewritten_query = state.get("rewritten_query")
     if not rewritten_query:
+        logger.error("rewritten_query 为空，无法进行结构化查询")
         raise ValueError("rewritten_query 为空，无法进行结构化查询")
     return rewritten_query
 
@@ -24,7 +26,7 @@ def query_vehicle_info(entities: dict) -> list[dict]:
     输出：vehicle_info（车辆信息列表）
     """
     # TODO: 查询 MongoDB vehicles 集合
-    # 暂时返回空列表
+    # 暂时返回空列表，后续实现 MongoDB 查询
     return []
 
 
@@ -36,7 +38,7 @@ def query_maintenance_records(entities: dict) -> list[dict]:
     输出：maintenance_records（保养记录列表）
     """
     # TODO: 查询 MongoDB maintenance_records 集合
-    # 暂时返回空列表
+    # 暂时返回空列表，后续实现 MongoDB 查询
     return []
 
 
@@ -48,13 +50,13 @@ def query_warranty_policies(entities: dict) -> list[dict]:
     输出：warranty_policies（质保规则列表）
     """
     # TODO: 查询 MongoDB warranty_policies 集合
-    # 暂时返回空列表
+    # 暂时返回空列表，后续实现 MongoDB 查询
     return []
 
 
 def query_structured_data(state: QueryGraphState) -> QueryGraphState:
     """
-    结构化查询主函数
+    结构化查询主函数（参考老师 answer_service.py 风格）
     
     输入：state（包含 rewritten_query, extracted_entities）
     输出：state（新增 structured_chunks 字段）
@@ -106,18 +108,3 @@ def query_structured_data(state: QueryGraphState) -> QueryGraphState:
     logger.info(f"结构化查询完成：{rewritten_query} → {len(structured_chunks)} 条结果")
     
     return state
-
-
-if __name__ == "__main__":
-    # 本地测试
-    mock_state = {
-        "session_id": "test-001",
-        "rewritten_query": "我的T5还在保修期内吗？",
-        "extracted_entities": {
-            "vehicle_model": "T5",
-            "vin": "LVSHFFAN5MF123456",
-        },
-    }
-    
-    result = query_structured_data(mock_state)
-    print(f"结构化查询结果：{len(result.get('structured_chunks', []))} 条")

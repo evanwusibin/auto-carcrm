@@ -1,0 +1,24 @@
+stateDiagram-v2
+    [*] --> uploaded : 📤 管理员上传文件
+
+    uploaded --> parsing : 触发解析任务
+    parsing --> parsed : 解析成功
+    parsing --> failed : 解析失败（格式错误/文件损坏）
+
+    parsed --> cleaning : 开始文本清洗
+    cleaning --> splitting : 清洗完成
+    splitting --> embedding : 切分完成
+    embedding --> indexing : 向量化完成
+    indexing --> pending_review : 索引构建完成
+    indexing --> failed : 索引失败（向量库异常）
+
+    pending_review --> published : ✅ 审核通过
+    pending_review --> rejected : ❌ 审核驳回
+
+    rejected --> uploaded : 重新上传/修改后重试
+    failed --> uploaded : 修复后重新提交
+
+    published --> offline : 📴 管理员手动下线
+    offline --> published : 🔄 重新上线
+
+    published --> [*] : （长期发布状态）

@@ -1,0 +1,43 @@
+stateDiagram-v2
+    [*] --> draft : 系统生成草稿
+
+    draft --> submitted : 👤 用户确认提交
+    draft --> [*] : 用户放弃
+
+    submitted --> accepted : 🔧 服务站受理
+    submitted --> cancelled : 👤 用户取消
+
+    accepted --> assigned : 分配给服务顾问/技师
+    accepted --> cancelled : 无效报修取消
+
+    assigned --> contacting : 联系客户确认情况
+
+    contacting --> waiting_vehicle : 等待车辆进站或救援到达
+
+    waiting_vehicle --> inspecting : 🔧 车辆到站开始检测
+
+    inspecting --> warranty_review : 需要判断质保归属
+    inspecting --> quotation : 非质保项目出报价
+    inspecting --> repairing : 明确故障直接维修
+
+    warranty_review --> repairing : ✅ 质保通过，开始免费维修
+    warranty_review --> quotation : 不在质保范围，转报价
+    warranty_review --> factory_support : 疑难问题升级厂家
+
+    factory_support --> repairing : 🏭 厂家给出方案，开始维修
+
+    quotation --> repairing : 👤 客户确认报价
+    quotation --> cancelled : 👤 客户拒绝报价
+
+    repairing --> waiting_parts : 等待配件到货
+    waiting_parts --> repairing : 配件到货继续维修
+
+    repairing --> completed : 🔧 维修完成
+
+    completed --> customer_confirmed : 👤 客户确认完成
+    completed --> repairing : 客户验车发现问题，返修
+
+    customer_confirmed --> closed : 🔚 工单正式关闭
+
+    cancelled --> [*]
+    closed --> [*]
