@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>知识导入 — 比亚迪商用车售后知识管理平台</title>
+<title>知识导入 — 汽车售后知识管理平台</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -65,14 +65,14 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Ping
 /* ─── SIDEBAR ─── */
 .sidebar {
   width: var(--sidebar-w); flex-shrink: 0;
-  background: linear-gradient(180deg, #0d1b3e 0%, #0f2350 100%);
-  border-right: 1px solid rgba(26,86,219,.18);
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
   display: flex; flex-direction: column;
   height: 100vh; overflow: hidden;
 }
 .sidebar-logo {
   padding: 18px 20px 14px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid #e2e8f0;
 }
 .logo-mark {
   display: flex; align-items: center; gap: 10px;
@@ -83,8 +83,8 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Ping
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .logo-icon svg { width: 18px; height: 18px; fill: #fff; }
-.logo-name { color: #fff; font-size: 14px; font-weight: 600; line-height: 1.2; }
-.logo-sub { color: rgba(255,255,255,.4); font-size: 11px; }
+.logo-name { color: #1e293b; font-size: 14px; font-weight: 600; line-height: 1.2; }
+.logo-sub { color: #64748b; font-size: 11px; }
 
 .nav-section { padding: 16px 12px 8px; }
 .nav-section-label {
@@ -96,7 +96,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Ping
   display: flex; align-items: center; gap: 10px;
   padding: 9px 10px;
   border-radius: 6px;
-  color: rgba(255,255,255,.58);
+  color: #64748b;
   text-decoration: none;
   font-size: 13px; font-weight: 500;
   transition: var(--transition);
@@ -108,7 +108,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Ping
 .nav-item:hover { background: rgba(26,86,219,.22); color: #fff; }
 .nav-item.active {
   background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: #fff;
+  color: #1a56db;
   box-shadow: 0 2px 8px rgba(26,86,219,.35);
 }
 .nav-item.active svg { opacity: 1; }
@@ -116,23 +116,23 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Ping
 .sidebar-footer {
   margin-top: auto;
   padding: 12px;
-  border-top: 1px solid rgba(255,255,255,.08);
+  border-top: 1px solid #e2e8f0;
 }
 .user-card {
   display: flex; align-items: center; gap: 10px;
   padding: 8px 10px; border-radius: 6px;
   cursor: pointer; transition: var(--transition);
 }
-.user-card:hover { background: rgba(255,255,255,.06); }
+.user-card:hover { background: #f8fafc; }
 .avatar {
   width: 30px; height: 30px; border-radius: 50%;
-  background: var(--blue-600);
+  background: #e8effd;
   color: #fff; font-size: 12px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .user-info { min-width: 0; }
 .user-name { color: rgba(255,255,255,.85); font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.user-role { color: rgba(255,255,255,.38); font-size: 11px; }
+.user-role { color: #64748b; font-size: 11px; }
 
 /* ─── MAIN AREA ─── */
 .main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
@@ -269,7 +269,7 @@ textarea.form-control { height: auto; padding: 8px 10px; resize: vertical; min-h
 /* ─── BUTTONS ─── */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 16px; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: var(--transition); white-space: nowrap; }
 .btn svg { width: 14px; height: 14px; }
-.btn-primary { background: var(--blue-600); color: #fff; }
+.btn-primary { background: var(--blue-600); color: #1e293b; }
 .btn-primary:hover { background: var(--blue-700); }
 .btn-secondary { background: var(--white); color: var(--gray-700); border: 1px solid var(--gray-300); }
 .btn-secondary:hover { background: var(--gray-100); }
@@ -432,7 +432,7 @@ tbody td { padding: 11px 16px; font-size: 13px; color: var(--gray-700); vertical
         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
       </div>
       <div>
-        <div class="logo-name">BYD 商用车</div>
+        <div class="logo-name">汽车</div>
         <div class="logo-sub">售后知识管理平台</div>
       </div>
     </div>
