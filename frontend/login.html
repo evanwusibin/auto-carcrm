@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>比亚迪商用车 — 售后知识管理平台</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue-700: #0a4fa3;
+  --blue-600: #1565c0;
+  --blue-500: #1976d2;
+  --blue-400: #42a5f5;
+  --blue-100: #e3f2fd;
+  --gray-900: #111827;
+  --gray-700: #374151;
+  --gray-500: #6b7280;
+  --gray-400: #9ca3af;
+  --gray-200: #e5e7eb;
+  --gray-100: #f3f4f6;
+  --white: #ffffff;
+  --error: #dc2626;
+  --success: #059669;
+  --warn: #d97706;
+  --radius: 6px;
+  --shadow-lg: 0 20px 60px rgba(0,0,0,.35);
+  --shadow-card: 0 4px 24px rgba(0,0,0,.18);
+  --transition: .2s cubic-bezier(.4,0,.2,1);
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: var(--gray-900);
+  overflow: hidden;
+}
+
+/* ─── BACKGROUND ─── */
+.bg-wrap {
+  position: fixed; inset: 0; z-index: 0;
+  background: #0d1e3a;
+}
+.bg-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+  display: block;
+  opacity: .92;
+  transition: opacity .6s;
+}
+.bg-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    105deg,
+    rgba(8,28,64,.82) 0%,
+    rgba(10,40,90,.55) 45%,
+    rgba(5,15,35,.30) 100%
+  );
+}
+
+/* ─── LAYOUT ─── */
+.page {
+  position: relative; z-index: 1;
+  height: 100vh;
+  display: flex;
+  align-items: stretch;
+}
+
+/* ─── LEFT BRAND PANEL ─── */
+.brand-panel {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 52px 56px 44px;
+  min-width: 0;
+}
+.brand-top { display: flex; flex-direction: column; gap: 0; }
+.brand-logo {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 64px;
+}
+.brand-logo-mark {
+  width: 44px; height: 44px;
+  background: var(--blue-500);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.brand-logo-mark svg { width: 26px; height: 26px; fill: #fff; }
+.brand-logo-text { color: rgba(255,255,255,.95); font-size: 17px; font-weight: 600; letter-spacing: .02em; }
+.brand-logo-sub { color: rgba(255,255,255,.5); font-size: 12px; margin-top: 2px; }
+
+.brand-headline {
+  color: #fff;
+  font-size: clamp(28px, 3vw, 44px);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -.01em;
+  margin-bottom: 24px;
+}
+.brand-headline em {
+  font-style: normal;
+  color: #64b5f6;
+}
+.brand-desc {
+  color: rgba(255,255,255,.62);
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 380px;
+}
+
+.brand-stats {
+  display: flex; gap: 40px;
+  margin-top: 56px;
+}
+.stat-item { }
+.stat-num {
+  color: #fff;
+  font-size: 28px; font-weight: 700;
+  letter-spacing: -.02em;
+}
+.stat-num span { font-size: 14px; font-weight: 400; margin-left: 2px; color: rgba(255,255,255,.6); }
+.stat-label { color: rgba(255,255,255,.5); font-size: 12px; margin-top: 3px; }
+
+.brand-footer {
+  color: rgba(255,255,255,.3);
+  font-size: 12px;
+}
+
+/* ─── LOGIN PANEL ─── */
+.login-side {
+  width: 440px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: rgba(255,255,255,.07);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border-left: 1px solid rgba(255,255,255,.12);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 368px;
+}
+
+.card-header { margin-bottom: 32px; }
+.card-title {
+  color: #fff;
+  font-size: 22px; font-weight: 700;
+  margin-bottom: 6px;
+}
+.card-sub { color: rgba(255,255,255,.5); font-size: 13px; }
+
+/* ─── TABS ─── */
+.tab-bar {
+  display: flex;
+  background: rgba(255,255,255,.08);
+  border-radius: var(--radius);
+  padding: 3px;
+  margin-bottom: 28px;
+  gap: 2px;
+}
+.tab-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,.55);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: var(--transition);
+}
+.tab-btn.active {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+}
+.tab-btn:hover:not(.active) { color: rgba(255,255,255,.8); }
+
+/* ─── PANELS ─── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ─── FORM ELEMENTS ─── */
+.form-group { margin-bottom: 18px; }
+.form-label {
+  display: block;
+  color: rgba(255,255,255,.7);
+  font-size: 12px; font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.input-wrap { position: relative; }
+.input-wrap .input-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: rgba(255,255,255,.35);
+  display: flex; align-items: center;
+  pointer-events: none;
+}
+.input-wrap .input-icon svg { width: 16px; height: 16px; }
+.form-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px 0 40px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: var(--radius);
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  transition: var(--transition);
+}
+.form-input::placeholder { color: rgba(255,255,255,.3); }
+.form-input:focus {
+  border-color: var(--blue-400);
+  background: rgba(255,255,255,.14);
+  box-shadow: 0 0 0 3px rgba(66,165,245,.2);
+}
+.form-input.error { border-color: #f87171; }
+
+.input-action {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  display: flex; align-items: center;
+}
+.toggle-pw, .code-btn {
+  background: none; border: none; cursor: pointer;
+  color: rgba(255,255,255,.45);
+  padding: 0 12px;
+  font-size: 12px;
+  display: flex; align-items: center; gap: 4px;
+  transition: var(--transition);
+}
+.toggle-pw:hover, .code-btn:hover { color: rgba(255,255,255,.85); }
+.toggle-pw svg { width: 16px; height: 16px; }
+.code-btn {
+  color: var(--blue-400); font-weight: 500;
+  border-left: 1px solid rgba(255,255,255,.15);
+  height: 30px;
+  white-space: nowrap;
+}
+.code-btn:disabled { color: rgba(255,255,255,.3); cursor: not-allowed; }
+
+/* code input no icon */
+.input-wrap.no-icon .form-input { padding-left: 12px; }
+
+.form-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px;
+}
+.remember-wrap {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+}
+.remember-wrap input[type=checkbox] {
+  width: 15px; height: 15px; accent-color: var(--blue-400); cursor: pointer;
+}
+.remember-wrap span { color: rgba(255,255,255,.6); font-size: 13px; }
+.forgot-link {
+  color: var(--blue-400); font-size: 13px;
+  text-decoration: none;
+}
+.forgot-link:hover { text-decoration: underline; }
+
+/* ─── SUBMIT BTN ─── */
+.btn-submit {
+  width: 100%; height: 46px;
+  background: var(--blue-600);
+  border: none; border-radius: var(--radius);
+  color: #fff; font-size: 15px; font-weight: 600;
+  cursor: pointer; letter-spacing: .02em;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-submit:hover:not(:disabled) { background: var(--blue-500); }
+.btn-submit:active:not(:disabled) { transform: scale(.99); }
+.btn-submit:disabled { opacity: .6; cursor: not-allowed; }
+.btn-submit .spinner {
+  display: none;
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+.btn-submit.loading .btn-text { opacity: 0; }
+.btn-submit.loading .spinner { display: block; position: absolute; }
+
+/* ─── SSO DIVIDER ─── */
+.divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 20px 0;
+}
+.divider::before, .divider::after {
+  content: ''; flex: 1;
+  height: 1px; background: rgba(255,255,255,.15);
+}
+.divider span { color: rgba(255,255,255,.35); font-size: 12px; white-space: nowrap; }
+
+.btn-sso {
+  width: 100%; height: 42px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: var(--radius);
+  color: rgba(255,255,255,.75); font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: var(--transition);
+}
+.btn-sso:hover {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.4);
+  color: #fff;
+}
+.btn-sso svg { width: 16px; height: 16px; opacity: .7; }
+
+/* ─── FIELD ERROR ─── */
+.field-err {
+  display: none;
+  color: #fca5a5; font-size: 12px; margin-top: 5px;
+}
+.field-err.show { display: block; }
+
+/* ─── TOAST ─── */
+.toast-wrap {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  z-index: 9999;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 13px; font-weight: 500;
+  color: #fff;
+  pointer-events: all;
+  opacity: 0; transform: translateY(10px);
+  transition: opacity .25s, transform .25s;
+  white-space: nowrap;
+  min-width: 180px; text-align: center;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.info  { background: rgba(21,101,192,.92); }
+.toast.error { background: rgba(185,28,28,.92); }
+.toast.success { background: rgba(5,150,105,.92); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 860px) {
+  .brand-panel { display: none; }
+  .login-side {
+    width: 100%;
+    background: rgba(10,25,55,.88);
+    border-left: none;
+  }
+  .bg-overlay {
+    background: rgba(8,28,64,.75);
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-wrap">
+  <img class="bg-img" id="bgImg"
+    src="https://www.bydglobal.com/content/dam/byd-global/cn/en/BYD_ENProductAndSolutions/CommercialVehicle/pic/CommercialVehicle-kv.jpg"
+    onerror="this.style.display='none'"
+    alt="">
+  <div class="bg-overlay"></div>
+</div>
+
+<div class="page">
+  <!-- Left brand panel -->
+  <div class="brand-panel">
+    <div class="brand-top">
+      <div class="brand-logo">
+        <div class="brand-logo-mark">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+        </div>
+        <div>
+          <div class="brand-logo-text">BYD Commercial Vehicle</div>
+          <div class="brand-logo-sub">After-Sales Knowledge Platform</div>
+        </div>
+      </div>
+
+      <div class="brand-headline">
+        售后知识<br>管理平台
+        <br><em>智能检索 · 精准响应</em>
+      </div>
+      <div class="brand-desc">
+        整合保养手册、质保规则、维修手册与典型案例，
+        为服务顾问、维修技师及售后工程师提供一站式知识检索与诊断辅助服务。
+      </div>
+
+      <div class="brand-stats">
+        <div class="stat-item">
+          <div class="stat-num">12<span>+</span></div>
+          <div class="stat-label">知识文档类型</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">3<span>端</span></div>
+          <div class="stat-label">厂家 / 经销商 / 客户</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">4<span>路</span></div>
+          <div class="stat-label">混合检索策略</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brand-footer">
+      &copy; 2026 比亚迪股份有限公司商用车事业部 &nbsp;·&nbsp; 保留所有权利
+    </div>
+  </div>
+
+  <!-- Right login panel -->
+  <div class="login-side">
+    <div class="login-card">
+      <div class="card-header">
+        <div class="card-title">账号登录</div>
+        <div class="card-sub">请使用企业账号或手机号登录</div>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="pwd">密码登录</button>
+        <button class="tab-btn" data-tab="sms">验证码登录</button>
+      </div>
+
+      <!-- Password panel -->
+      <div class="panel active" id="panel-pwd">
+        <div class="form-group">
+          <label class="form-label">工号 / 账号</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <input class="form-input" id="pwd-account" type="text"
+              placeholder="请输入工号或账号" autocomplete="username" maxlength="64">
+          </div>
+          <div class="field-err" id="err-account">请输入账号</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input class="form-input" id="pwd-password" type="password"
+              placeholder="请输入密码" autocomplete="current-password" maxlength="64">
+            <div class="input-action">
+              <button class="toggle-pw" id="pwToggle" type="button" title="显示/隐藏密码">
+                <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="field-err" id="err-password">请输入密码</div>
+        </div>
+
+        <div class="form-row">
+          <label class="remember-wrap">
+            <input type="checkbox" id="rememberMe">
+            <span>记住账号</span>
+          </label>
+          <a class="forgot-link" href="#" onclick="showToast('请联系系统管理员重置密码','info');return false;">忘记密码</a>
+        </div>
+
+        <button class="btn-submit" id="btn-pwd-login">
+          <span class="btn-text">登 录</span>
+          <span class="spinner"></span>
+        </button>
+      </div>
+
+      <!-- SMS panel -->
+      <div class="panel" id="panel-sms">
+        <div class="form-group">
+          <label class="form-label">手机号</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.29 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+            </span>
+            <input class="form-input" id="sms-phone" type="tel"
+              placeholder="请输入手机号" maxlength="11">
+          </div>
+          <div class="field-err" id="err-phone">请输入有效的手机号</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">验证码</label>
+          <div class="input-wrap no-icon">
+            <input class="form-input" id="sms-code" type="text"
+              placeholder="请输入验证码" maxlength="6" style="padding-left:12px">
+            <div class="input-action">
+              <button class="code-btn" id="btn-send-code" type="button">获取验证码</button>
+            </div>
+          </div>
+          <div class="field-err" id="err-code">请输入验证码</div>
+        </div>
+
+        <div style="margin-bottom:24px"></div>
+
+        <button class="btn-submit" id="btn-sms-login">
+          <span class="btn-text">登 录</span>
+          <span class="spinner"></span>
+        </button>
+      </div>
+
+      <!-- SSO -->
+      <div class="divider"><span>或使用企业单点登录</span></div>
+      <button class="btn-sso" id="btn-sso">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+          <path d="M8 21h8m-4-4v4"/>
+        </svg>
+        企业 SSO 单点登录
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+(function () {
+  // ─── Tab switching ───
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ─── Password toggle ───
+  const pwInput = document.getElementById('pwd-password');
+  const eyeIcon = document.getElementById('eye-icon');
+  document.getElementById('pwToggle').addEventListener('click', () => {
+    const show = pwInput.type === 'password';
+    pwInput.type = show ? 'text' : 'password';
+    eyeIcon.innerHTML = show
+      ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  });
+
+  // ─── Remember account ───
+  const accountInput = document.getElementById('pwd-account');
+  const savedAcc = localStorage.getItem('byd_account');
+  if (savedAcc) {
+    accountInput.value = savedAcc;
+    document.getElementById('rememberMe').checked = true;
+  }
+
+  // ─── Toast ───
+  function showToast(msg, type = 'info', duration = 3000) {
+    const wrap = document.getElementById('toastWrap');
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    t.textContent = msg;
+    wrap.appendChild(t);
+    requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+    setTimeout(() => {
+      t.classList.remove('show');
+      setTimeout(() => t.remove(), 300);
+    }, duration);
+  }
+  window.showToast = showToast;
+
+  // ─── Field error helpers ───
+  function setErr(id, show) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('show', show);
+  }
+  function clearErrs() {
+    document.querySelectorAll('.field-err').forEach(e => e.classList.remove('show'));
+    document.querySelectorAll('.form-input').forEach(e => e.classList.remove('error'));
+  }
+
+  // ─── Password login ───
+  function handlePwdLogin() {
+    clearErrs();
+    const account = accountInput.value.trim();
+    const password = pwInput.value.trim();
+    let ok = true;
+    if (!account) { setErr('err-account', true); accountInput.classList.add('error'); ok = false; }
+    if (!password) { setErr('err-password', true); pwInput.classList.add('error'); ok = false; }
+    if (!ok) return;
+    if (document.getElementById('rememberMe').checked) {
+      localStorage.setItem('byd_account', account);
+    } else {
+      localStorage.removeItem('byd_account');
+    }
+    const btn = document.getElementById('btn-pwd-login');
+    btn.classList.add('loading'); btn.disabled = true;
+    setTimeout(() => {
+      btn.classList.remove('loading'); btn.disabled = false;
+      showToast('登录成功，正在跳转...', 'success');
+      setTimeout(() => { window.location.href = 'import.html'; }, 800);
+    }, 1000);
+  }
+  document.getElementById('btn-pwd-login').addEventListener('click', handlePwdLogin);
+  pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') handlePwdLogin(); });
+
+  // ─── SMS code countdown ───
+  let codeTimer = null;
+  document.getElementById('btn-send-code').addEventListener('click', () => {
+    const phone = document.getElementById('sms-phone').value.trim();
+    if (!/^1[3-9]\d{9}$/.test(phone)) {
+      setErr('err-phone', true);
+      document.getElementById('sms-phone').classList.add('error');
+      return;
+    }
+    setErr('err-phone', false);
+    document.getElementById('sms-phone').classList.remove('error');
+    const btn = document.getElementById('btn-send-code');
+    let sec = 60;
+    btn.disabled = true; btn.textContent = sec + 's后重发';
+    showToast('验证码已发送', 'success');
+    codeTimer = setInterval(() => {
+      sec--;
+      btn.textContent = sec + 's后重发';
+      if (sec <= 0) {
+        clearInterval(codeTimer); btn.disabled = false; btn.textContent = '获取验证码';
+      }
+    }, 1000);
+  });
+
+  // ─── SMS login ───
+  function handleSmsLogin() {
+    clearErrs();
+    const phone = document.getElementById('sms-phone').value.trim();
+    const code  = document.getElementById('sms-code').value.trim();
+    let ok = true;
+    if (!/^1[3-9]\d{9}$/.test(phone)) {
+      setErr('err-phone', true);
+      document.getElementById('sms-phone').classList.add('error'); ok = false;
+    }
+    if (code.length < 4) {
+      setErr('err-code', true);
+      document.getElementById('sms-code').classList.add('error'); ok = false;
+    }
+    if (!ok) return;
+    const btn = document.getElementById('btn-sms-login');
+    btn.classList.add('loading'); btn.disabled = true;
+    setTimeout(() => {
+      btn.classList.remove('loading'); btn.disabled = false;
+      showToast('登录成功，正在跳转...', 'success');
+      setTimeout(() => { window.location.href = 'import.html'; }, 800);
+    }, 1000);
+  }
+  document.getElementById('btn-sms-login').addEventListener('click', handleSmsLogin);
+
+  // ─── SSO ───
+  document.getElementById('btn-sso').addEventListener('click', () => {
+    showToast('正在跳转至企业 SSO 认证...', 'info');
+    setTimeout(() => { window.location.href = 'import.html'; }, 1200);
+  });
+})();
+</script>
+</body>
+</html>
