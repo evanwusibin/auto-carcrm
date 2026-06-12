@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智能检索问答 - 比亚迪商用车售后知识管理平台</title>
+<title>智能检索问答 - 汽车售后知识管理平台</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
@@ -427,7 +427,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
     <div class="logo-mark">
       <svg viewBox="0 0 24 24"><path d="M3 12l7-7 7 7M5 10v7a1 1 0 001 1h4v-4h4v4h4a1 1 0 001-1v-7"/></svg>
     </div>
-    <div class="logo-text">比亚迪商用车<span>售后知识管理平台</span></div>
+    <div class="logo-text">汽车<span>售后知识管理平台</span></div>
   </div>
 
   <div class="sidebar-section">功能导航</div>
@@ -541,7 +541,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
       <div class="chat-messages" id="chatMessages">
         <!-- 欢迎界面 -->
         <div class="welcome-card" id="welcomeCard">
-          <div class="welcome-title">⚡ 比亚迪商用车售后知识助手</div>
+          <div class="welcome-title">⚡ 汽车售后知识助手</div>
           <div class="welcome-sub">
             基于保养手册、质保手册、维修手册及典型案例，通过<strong>多路混合 RAG 检索</strong>为您提供专业解答。
             支持<strong>流式实时输出</strong>（边生成边展示）和<strong>非流式完整输出</strong>两种模式，所有回答均标注知识来源。
@@ -791,7 +791,7 @@ function newSession() {
   const chatEl = document.getElementById('chatMessages');
   chatEl.innerHTML = `
     <div class="welcome-card" id="welcomeCard">
-      <div class="welcome-title">⚡ 比亚迪商用车售后知识助手</div>
+      <div class="welcome-title">⚡ 汽车售后知识助手</div>
       <div class="welcome-sub">新建会话。请输入您的售后问题，支持<strong>流式</strong>和<strong>非流式</strong>两种输出模式。</div>
       <div class="quick-questions">
         <div class="quick-q" onclick="quickAsk(this)">T5轻卡行驶6万公里需要做哪些保养？</div>
