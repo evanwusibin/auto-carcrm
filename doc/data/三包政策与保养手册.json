@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "title": "商用车三包政策与保养手册",
+    "version": "1.0",
+    "data_source": "基于《家用汽车产品修理更换退货责任规定》(2022年修订)及主流商用车厂商保养手册整理",
+    "last_updated": "2026-06-13"
+  },
+  "warranty_policy": {
+    "regulation_name": "《家用汽车产品修理更换退货责任规定》（国家市场监督管理总局令第43号）",
+    "effective_date": "2022-01-01",
+    "warranty_periods": {
+      "overall_vehicle_warranty": "不低于3年或6万公里（以先到者为准）",
+      "powertrain_warranty": "不低于3年或6万公里",
+      "three_guarantee_period": "不低于2年或5万公里"
+    }
+  },
+  "brands": [
+    {
+      "brand_name": "比亚迪商用车",
+      "models": ["T5", "T7", "V3", "V6"],
+      "warranty": {
+        "vehicle": "3年/10万公里",
+        "powertrain": "5年/20万公里",
+        "battery": "8年/50万公里（新能源）"
+      },
+      "maintenance_schedule": {
+        "first_service": "3000公里或3个月",
+        "minor_service": "每10000公里或6个月",
+        "major_service": "每40000公里或24个月"
+      }
+    },
+    {
+      "brand_name": "东风商用车",
+      "models": ["天龙KL", "天锦KR", "凯普特"],
+      "warranty": {
+        "vehicle": "2年/15万公里",
+        "powertrain": "3年/20万公里"
+      },
+      "maintenance_schedule": {
+        "first_service": "5000公里或3个月",
+        "minor_service": "每15000公里或6个月",
+        "major_service": "每60000公里或24个月"
+      }
+    },
+    {
+      "brand_name": "一汽解放",
+      "models": ["J6P", "J6L", "J7"],
+      "warranty": {
+        "vehicle": "2年/15万公里",
+        "powertrain": "3年/30万公里"
+      },
+      "maintenance_schedule": {
+        "first_service": "5000公里或3个月",
+        "minor_service": "每15000公里或6个月",
+        "major_service": "每60000公里或24个月"
+      }
+    }
+  ],
+  "maintenance_items": [
+    {"item": "更换机油", "interval": "每10000公里", "cost": "200-500元"},
+    {"item": "更换机油滤清器", "interval": "每10000公里", "cost": "50-100元"},
+    {"item": "更换空气滤清器", "interval": "每20000公里", "cost": "80-150元"},
+    {"item": "更换燃油滤清器", "interval": "每30000公里", "cost": "100-200元"},
+    {"item": "更换制动液", "interval": "每40000公里或2年", "cost": "150-300元"},
+    {"item": "更换冷却液", "interval": "每60000公里或3年", "cost": "200-400元"},
+    {"item": "更换火花塞", "interval": "每40000公里", "cost": "100-300元"},
+    {"item": "更换变速箱油", "interval": "每60000公里", "cost": "300-600元"}
+  ],
+  "consumable_parts": [
+    {"name": "机油滤清器", "lifespan": "10000公里", "price": "20-80元"},
+    {"name": "空气滤清器", "lifespan": "20000公里", "price": "30-150元"},
+    {"name": "燃油滤清器", "lifespan": "30000公里", "price": "30-200元"},
+    {"name": "制动片", "lifespan": "50000公里", "price": "100-400元/套"},
+    {"name": "蓄电池", "lifespan": "3-4年", "price": "300-800元"},
+    {"name": "轮胎", "lifespan": "60000公里", "price": "400-1500元/条"},
+    {"name": "雨刮片", "lifespan": "1-2年", "price": "30-100元/对"}
+  ]
+}

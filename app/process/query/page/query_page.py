@@ -93,16 +93,28 @@ class QueryPage:
             is_stream=False,
         ) or {}
 
+        refs = _build_refs(final_state)
+        routes = _build_routes(final_state)
+        risk = _build_risk(final_state)
+
         return {
             "session_id": session_id,
             "is_stream": False,
             "answer": final_state.get("answer", ""),
             "done_list": get_done_task_list(session_id),
             "image_urls": final_state.get("image_urls") or [],
+            "candidate_item_names": final_state.get("candidate_item_names") or [],
+            "refs": refs,
+            "routes": routes,
+            "risk": risk,
             "user_id": user_id,
         }
 
     # ---------- 2. 历史记录 ----------
+    def get_sessions(self, limit: int = 20) -> list[dict]:
+        """获取所有会话列表。"""
+        return history_repository.list_sessions(limit=limit)
+
     def get_history(self, session_id: str, limit: int = 10) -> list[dict]:
         """读取最近的历史消息（默认 10 条）。"""
         return history_repository.list_recent(session_id, limit=limit)
@@ -141,6 +153,11 @@ class QueryPage:
             )
             update_task_status(session_id, TASK_STATUS_COMPLETED, is_stream)
 
+            # 构建前端需要的 refs/routes/risk
+            refs = _build_refs(result_state)
+            routes = _build_routes(result_state)
+            risk = _build_risk(result_state)
+
             # 流式：把最终结果通过 SSE 推送给前端
             if is_stream:
                 push_to_session(
@@ -150,6 +167,10 @@ class QueryPage:
                         "answer": result_state.get("answer", ""),
                         "status": "completed",
                         "image_urls": result_state.get("image_urls") or [],
+                        "candidate_item_names": result_state.get("candidate_item_names") or [],
+                        "refs": refs,
+                        "routes": routes,
+                        "risk": risk,
                     },
                 )
             return result_state
@@ -163,6 +184,47 @@ class QueryPage:
                     {"message": "查询执行失败，请稍后再试"},
                 )
             return None
+
+
+def _build_refs(state: dict) -> list[dict]:
+    """从 reranked_docs 构建前端需要的 refs 格式"""
+    docs = state.get("reranked_docs") or state.get("rrf_chunks") or []
+    refs = []
+    for doc in docs[:10]:  # 最多取10条
+        refs.append({
+            "doc": doc.get("file_title") or doc.get("item_name") or "未知文档",
+            "page": doc.get("part", ""),
+            "section": doc.get("title") or doc.get("parent_title") or "",
+            "text": (doc.get("content") or "")[:200],
+            "score": round(doc.get("score", doc.get("distance", 0)), 4),
+        })
+    return refs
+
+
+def _build_routes(state: dict) -> list[str]:
+    """根据各路检索结果是否非空，判断激活了哪些路由"""
+    routes = []
+    if state.get("embedding_chunks") or state.get("hyde_embedding_chunks"):
+        routes.append("vec")
+    if state.get("keyword_chunks"):
+        routes.append("kw")
+    if state.get("structured_chunks"):
+        routes.append("struct")
+    if state.get("case_chunks"):
+        routes.append("case")
+    if state.get("web_search_docs"):
+        routes.append("web")
+    return routes
+
+
+def _build_risk(state: dict) -> dict | None:
+    """根据置信度判断是否有风险提示"""
+    score = state.get("confidence_score", 1.0)
+    if score < 0.3:
+        return {"level": "high", "text": "检索置信度较低，答案可能不准确，建议人工核实"}
+    if score < 0.6:
+        return {"level": "med", "text": "检索置信度中等，建议结合实际情况参考"}
+    return None
 
 
 # 全局门面单例：供 router 直接 import 使用

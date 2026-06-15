@@ -8,6 +8,28 @@ from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.config import CHUNK_OVERLAP, CHUNK_MAX_SIZE,CHUNK_SIZE
 from app.shared.runtime.logger import logger, step_log
 
+
+def _read_text_auto_encoding(file_path: Path) -> str:
+    """
+    自动检测文件编码并读取文本内容
+    支持 UTF-8、GBK、GB2312、GB18030、Big5 等常见编码
+    """
+    # 尝试的编码列表（按优先级排序）
+    encodings = ['utf-8', 'gbk', 'gb2312', 'gb18030', 'big5', 'latin-1']
+    
+    for encoding in encodings:
+        try:
+            content = file_path.read_text(encoding=encoding)
+            logger.info(f"[编码检测] 成功使用 {encoding} 编码读取文件: {file_path.name}")
+            return content
+        except (UnicodeDecodeError, UnicodeError):
+            continue
+    
+    # 如果所有编码都失败，使用 latin-1（不会失败，但可能显示乱码）
+    logger.warning(f"[编码检测] 所有编码尝试失败，使用 latin-1 兜底: {file_path.name}")
+    return file_path.read_text(encoding='latin-1')
+
+
 @step_log("load_markdown_content")
 def load_markdown_content(state:ImportGraphState)-> tuple[str, str,Path]:
     """
@@ -29,15 +51,15 @@ def load_markdown_content(state:ImportGraphState)-> tuple[str, str,Path]:
         logger.warning("没有从state读取到content内容，我们使用md_path尝试再次读取！！！")
         # 如果文件路径存在，则读取文件内容
         if md_path:
-            # "content 为空 → 按 md_path 读取文件
-            content = md_path_obj.read_text(encoding="utf-8")
+            # "content 为空 → 按 md_path 读取文件（支持多种编码）
+            content = _read_text_auto_encoding(md_path_obj)
             # 读完就state赋值
             state["content"] = content
         # 二次判断 双重校验，仍然邬内容，直接抛出异常终止流程
         if not content:
             # 如果还是空的就直接报错
             logger.error(f"md_path为空无法继续")
-            raise ValueError(f"content中没哟数据，md_path为空无法继续")
+            raise ValueError(f"content中没数据，md_path为空无法继续")
     # 判断file_title是否为空 实现定义好了Path(md_path)对象 直接取名字就好了，不为空
     if not file_title:
         # 如果为空就直接从路径中提取文件名称就行赋值

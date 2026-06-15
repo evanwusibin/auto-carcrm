@@ -11,7 +11,8 @@ def node_web_search_mcp(state):
     """
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state["is_stream"])
     # web_search_docs 最后return的时候不是state 是单独的某一个值
-    web_search_docs = search_by_web(state)
+    state = search_by_web(state)
+    web_search_docs = state.get("web_search_docs", [])
     add_done_task(state["session_id"], sys._getframe().f_code.co_name, state["is_stream"])
     return {
         "web_search_docs":web_search_docs

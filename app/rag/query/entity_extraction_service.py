@@ -17,11 +17,12 @@ from app.process.query.agent.state import QueryGraphState
 ENTITY_TYPES = {
     "vehicle_model": "车型（如 T5、T7）",
     "vin": "车架号（VIN码）",
-    "fault_codes": "故障码（如 P0A0F）",
+    "fault_code": "故障码（如 P0A0F）",
     "mileage": "行驶里程",
     "component": "部件（如 发动机、电池）",
     "purchase_date": "购车日期",
     "fault_symptom": "故障现象描述",
+    "doc_type": "文档类型（如质保政策、保养手册、维修手册、案例）",
 }
 
 
@@ -49,7 +50,7 @@ def extract_entities(state: QueryGraphState) -> QueryGraphState:
     llm_client = llm_provider.chat()
     
     # 3. 加载提示词
-    prompt_text = load_prompt("entity_extraction", rewritten_query=rewritten_query)
+    prompt_text = load_prompt("entity_extraction", query=rewritten_query)
     
     # 4. 构建消息
     messages = [HumanMessage(content=prompt_text)]

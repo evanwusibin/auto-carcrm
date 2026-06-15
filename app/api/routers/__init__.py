@@ -9,6 +9,8 @@ from app.api.routers.qa import router as qa_router
 from app.api.routers.repair import router as repair_router
 from app.api.routers.vehicle import router as vehicle_router
 from app.api.routers.warranty import router as warranty_router
+from app.api.routers.auth import router as auth_router
+from app.api.routers.feedback import router as feedback_router
 
 
 def build_api_router() -> APIRouter:
@@ -24,4 +26,6 @@ def build_api_router() -> APIRouter:
     router.include_router(warranty_router, prefix='/api/v1')
     router.include_router(diagnosis_router, prefix='/api/v1')
     router.include_router(repair_router, prefix='/api/v1')
+    router.include_router(auth_router, prefix="/api/v1")
+    router.include_router(feedback_router, prefix="/api/v1")
     return router

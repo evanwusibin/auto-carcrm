@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-实体抽取节点单元测试
+实体抽取节点单元测试（车辆相关测试数据）
 """
 import pytest
 from unittest.mock import patch, MagicMock
@@ -15,7 +15,7 @@ class TestNodeEntityExtraction:
 
         state = {
             "session_id": "test-001",
-            "rewritten_query": "T5车型发动机异响怎么办？",
+            "rewritten_query": "我的T5发动机异响怎么办？",
             "is_stream": False,
         }
 
@@ -29,7 +29,6 @@ class TestNodeEntityExtraction:
             }
             result = node_entity_extraction(state)
 
-            assert "extracted_entities" in result
             assert result["extracted_entities"]["vehicle_model"] == "T5"
             assert result["extracted_entities"]["fault_symptom"] == "发动机异响"
 
@@ -62,7 +61,7 @@ class TestNodeEntityExtraction:
 
         state = {
             "session_id": "test-003",
-            "rewritten_query": "我的车开了5万公里，需要保养吗？",
+            "rewritten_query": "我的T5开了5万公里，需要保养吗？",
             "is_stream": False,
         }
 
@@ -70,31 +69,37 @@ class TestNodeEntityExtraction:
             mock_extract.return_value = {
                 **state,
                 "extracted_entities": {
+                    "vehicle_model": "T5",
                     "mileage": "50000",
                 },
             }
             result = node_entity_extraction(state)
 
+            assert result["extracted_entities"]["vehicle_model"] == "T5"
             assert result["extracted_entities"]["mileage"] == "50000"
 
-    def test_extract_empty_entities(self):
-        """测试无实体抽取"""
+    def test_extract_warranty_query(self):
+        """测试质保查询实体抽取"""
         from app.process.query.agent.nodes.node_entity_extraction import node_entity_extraction
 
         state = {
             "session_id": "test-004",
-            "rewritten_query": "你好",
+            "rewritten_query": "我的T7电池还在保修期内吗？",
             "is_stream": False,
         }
 
         with patch("app.process.query.agent.nodes.node_entity_extraction.extract_entities") as mock_extract:
             mock_extract.return_value = {
                 **state,
-                "extracted_entities": {},
+                "extracted_entities": {
+                    "vehicle_model": "T7",
+                    "component": "电池",
+                },
             }
             result = node_entity_extraction(state)
 
-            assert result["extracted_entities"] == {}
+            assert result["extracted_entities"]["vehicle_model"] == "T7"
+            assert result["extracted_entities"]["component"] == "电池"
 
 
 class TestEntityExtractionService:
@@ -105,11 +110,11 @@ class TestEntityExtractionService:
         from app.rag.query.entity_extraction_service import validate_entity_state
 
         state = {
-            "rewritten_query": "T5车型发动机异响怎么办？",
+            "rewritten_query": "我的T5发动机异响怎么办？",
         }
 
         result = validate_entity_state(state)
-        assert result == "T5车型发动机异响怎么办？"
+        assert result == "我的T5发动机异响怎么办？"
 
     def test_validate_entity_state_with_empty_query(self):
         """测试空查询校验"""

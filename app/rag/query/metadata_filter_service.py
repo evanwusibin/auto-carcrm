@@ -1,132 +1,64 @@
 # -*- coding: utf-8 -*-
-"""
-元数据过滤服务
-作用：按车型/版本/有效期/权限过滤检索结果
-参考老师 answer_service.py 的代码风格
-"""
-from datetime import datetime
-
-from app.shared.runtime.logger import logger, step_log
+"""元数据过滤服务"""
 from app.process.query.agent.state import QueryGraphState
+from app.shared.runtime.logger import logger, step_log
 
 
-@step_log("validate_filter_state")
-def validate_filter_state(state: QueryGraphState):
-    """校验元数据过滤所需参数"""
-    rrf_chunks = state.get("rrf_chunks", [])
-    return rrf_chunks
-
-
-def filter_by_vehicle_model(chunks: list[dict], vehicle_model: str) -> list[dict]:
+@step_log("filter_by_metadata")
+def filter_by_metadata(state: QueryGraphState) -> QueryGraphState:
     """
-    按车型过滤
-    
-    输入：chunks（检索结果列表），vehicle_model（车型）
-    输出：filtered_chunks（过滤后的结果）
+    对 RRF 融合后的结果做元数据过滤：
+    1. 从 extracted_entities 中提取过滤条件
+    2. 对 rrf_chunks 中的每条结果检查是否匹配
+    3. 保留匹配的结果，不匹配的降权但不丢弃
+    4. 回写 filtered_chunks
     """
-    if not vehicle_model:
-        return chunks
-    
-    filtered_chunks = []
-    for chunk in chunks:
-        chunk_vehicle_model = chunk.get("vehicle_model", "")
-        # 如果 chunk 没有车型信息，或者车型匹配，则保留
-        if not chunk_vehicle_model or chunk_vehicle_model == vehicle_model:
-            filtered_chunks.append(chunk)
-    
-    return filtered_chunks
+    logger.info("[metadata_filter] 元数据过滤开始")
 
+    rrf_chunks = state.get("rrf_chunks", []) or []
+    extracted_entities = state.get("extracted_entities", {}) or {}
 
-def filter_by_expire_date(chunks: list[dict]) -> list[dict]:
-    """
-    按有效期过滤（过滤掉已过期的文档）
-    
-    输入：chunks（检索结果列表）
-    输出：filtered_chunks（过滤后的结果）
-    """
-    today = datetime.now().strftime("%Y-%m-%d")
-    
-    filtered_chunks = []
-    for chunk in chunks:
-        expire_date = chunk.get("expire_date", "")
-        # 如果没有过期日期，或者过期日期大于今天，则保留
-        if not expire_date or expire_date >= today:
-            filtered_chunks.append(chunk)
-    
-    return filtered_chunks
+    if not rrf_chunks:
+        logger.warning("[metadata_filter] rrf_chunks 为空，跳过过滤")
+        state["filtered_chunks"] = []
+        return state
 
+    vehicle_model = str(extracted_entities.get("vehicle_model") or extracted_entities.get("model") or "").strip().lower()
+    doc_type = str(extracted_entities.get("doc_type") or extracted_entities.get("document_type") or "").strip().lower()
 
-def filter_by_visible_roles(chunks: list[dict], user_role: str) -> list[dict]:
-    """
-    按权限过滤
-    
-    输入：chunks（检索结果列表），user_role（用户角色）
-    输出：filtered_chunks（过滤后的结果）
-    """
-    if not user_role:
-        return chunks
-    
-    filtered_chunks = []
-    for chunk in chunks:
-        visible_roles = chunk.get("visible_roles", [])
-        # 如果没有权限限制，或者用户角色在可见角色列表中，则保留
-        if not visible_roles or user_role in visible_roles:
-            filtered_chunks.append(chunk)
-    
-    return filtered_chunks
+    if not vehicle_model and not doc_type:
+        logger.info("[metadata_filter] 无过滤条件，直接透传")
+        state["filtered_chunks"] = rrf_chunks
+        return state
 
+    filtered = []
+    demoted = []
 
-def filter_by_state(chunks: list[dict]) -> list[dict]:
-    """
-    按状态过滤（只保留 active 状态的文档）
-    
-    输入：chunks（检索结果列表）
-    输出：filtered_chunks（过滤后的结果）
-    """
-    filtered_chunks = []
-    for chunk in chunks:
-        state = chunk.get("state", "active")
-        # 如果没有状态信息，或者状态为 active，则保留
-        if not state or state == "active":
-            filtered_chunks.append(chunk)
-    
-    return filtered_chunks
+    for chunk in rrf_chunks:
+        content = str(chunk.get("content", "")).lower()
+        title = str(chunk.get("title", "")).lower()
+        parent_title = str(chunk.get("parent_title", "")).lower()
+        search_text = f"{content} {title} {parent_title}"
 
+        match = True
+        if vehicle_model and vehicle_model not in search_text:
+            match = False
+        if doc_type and doc_type not in search_text:
+            match = False
 
-def apply_metadata_filter(state: QueryGraphState) -> QueryGraphState:
-    """
-    元数据过滤主函数（参考老师 answer_service.py 风格）
-    
-    输入：state（包含 rrf_chunks, extracted_entities）
-    输出：state（更新 rrf_chunks 字段）
-    """
-    # 1. 校验参数
-    rrf_chunks = validate_filter_state(state)
-    
-    # 2. 提取过滤条件
-    entities = state.get("extracted_entities", {})
-    vehicle_model = entities.get("vehicle_model", "")
-    user_role = state.get("user_role", "")
-    
-    # 3. 按车型过滤
-    filtered_chunks = filter_by_vehicle_model(rrf_chunks, vehicle_model)
-    logger.info(f"车型过滤后：{len(rrf_chunks)} → {len(filtered_chunks)} 条")
-    
-    # 4. 按有效期过滤
-    filtered_chunks = filter_by_expire_date(filtered_chunks)
-    logger.info(f"有效期过滤后：{len(filtered_chunks)} 条")
-    
-    # 5. 按权限过滤
-    filtered_chunks = filter_by_visible_roles(filtered_chunks, user_role)
-    logger.info(f"权限过滤后：{len(filtered_chunks)} 条")
-    
-    # 6. 按状态过滤
-    filtered_chunks = filter_by_state(filtered_chunks)
-    logger.info(f"状态过滤后：{len(filtered_chunks)} 条")
-    
-    # 7. 写入 state
-    state["rrf_chunks"] = filtered_chunks
-    
-    logger.info(f"元数据过滤完成：{len(rrf_chunks)} → {len(filtered_chunks)} 条")
-    
+        if match:
+            filtered.append(chunk)
+        else:
+            chunk_copy = dict(chunk)
+            chunk_copy["score"] = chunk_copy.get("score", 0.0) * 0.5
+            demoted.append(chunk_copy)
+
+    if filtered:
+        result = sorted(filtered, key=lambda x: x.get("score", 0.0), reverse=True)
+        logger.info(f"[metadata_filter] 匹配 {len(filtered)} 条，降权 {len(demoted)} 条")
+    else:
+        result = sorted(rrf_chunks, key=lambda x: x.get("score", 0.0), reverse=True)
+        logger.info("[metadata_filter] 无完全匹配，保留全部原始结果")
+
+    state["filtered_chunks"] = result
     return state

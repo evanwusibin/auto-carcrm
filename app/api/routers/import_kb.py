@@ -16,7 +16,7 @@ from __future__ import annotations
 from mimetypes import guess_type
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile, Form
 
 from app.core.dependencies import CurrentUser, get_current_user
 from app.core.response import success_response
@@ -31,6 +31,14 @@ router = APIRouter(prefix='/knowledge', tags=['knowledge-import'])
 def upload_documents(
     background_tasks: BackgroundTasks,
     files: list[UploadFile] = File(..., description='待导入的知识文件（当前取第一个）'),
+    doc_type: str = Form('', description='文档类型'),
+    vehicle_model: str = Form('', description='适用车型'),
+    version: str = Form('', description='版本号'),
+    component: str = Form('', description='适用部件'),
+    effective_date: str = Form('', description='生效日期'),
+    expire_date: str = Form('', description='失效日期'),
+    visible_roles: str = Form('all', description='可见角色'),
+    remark: str = Form('', description='备注说明'),
     user: CurrentUser = Depends(get_current_user),
 ):
     """
@@ -43,10 +51,23 @@ def upload_documents(
     Returns:
         ``{code, message, data: {task_ids, user_id}}``
     """
+    # 构建元数据字典
+    meta = {
+        'doc_type': doc_type,
+        'vehicle_model': vehicle_model,
+        'version': version,
+        'component': component,
+        'effective_date': effective_date,
+        'expire_date': expire_date,
+        'visible_roles': visible_roles,
+        'remark': remark,
+    }
+    
     result = import_page.upload_and_invoke(
         files=files,
         background_tasks=background_tasks,
         user_id=user.user_id,
+        meta=meta,
     )
     logger.info(
         f"[import_kb.upload] user={user.user_id} "

@@ -1,19 +1,17 @@
 """
-Mermaid 块提取 + 静态语法预检器
+Mermaid 块提取 + 精准语法预检器（v2）
 
-功能：
-1. 解析 flows/ 下所有 .md，提取 ```mermaid``` 围栏块
-2. 把每个块单独导出为 .mermaid_extracts/<md_basename>__<n>.mmd
-3. 对每个块做静态语法预检（不依赖 mermaid CLI）
-4. 报告：每个 md 文件的 mermaid 块数量 + 每个块的预检结果
+聚焦"硬错"：仅报告会让任何主流 mermaid 渲染器（mermaid 9+/10/11）都报错的语法问题。
+中文 ID / emoji / 全角标点 / <br/> 在现代 mermaid 中都是合法的，不再误报。
 
-预检规则（针对 mermaid flowchart TD/LR）：
-- 必须以 flowchart / graph / sequenceDiagram / classDiagram / stateDiagram / gitGraph 之一开头
-- 节点 ID 仅允许 [A-Za-z0-9_]（中文 ID 也会被部分渲染器拒收）
-- 节点形状中括号必须成对
-- subgraph ... end 必须成对
-- 标签里若含空格、<、>、括号等需要用 ["..."] 引号包裹
-- 边语法 A --> B / A --- B / A -->|label| B / A -- text --- B
+硬错清单：
+1) 块为空 / 无 header（必须以 flowchart / graph / sequenceDiagram 等关键字开头）
+2) subgraph / end 数量不匹配
+3) 三种括号 [ ] { } ( ) 数量不配对
+4) 双引号 " 出现奇数次（字符串未闭合）
+5) 连字符节点 A--B 这种"无箭头边"无标签的形式，mermaid 10+ 已支持，但应避免
+6) 边标签的引号未闭合：A -->|"label"| B
+7) 含 mermaid 关键字冲突（如 direction、style、classDef 等）但语法错
 """
 from __future__ import annotations
 
@@ -72,12 +70,12 @@ def extract_blocks(md_path: Path) -> List[Block]:
     return blocks
 
 
-# ------- 静态预检 -------
-NODE_ID = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\b")
 SUBGRAPH = re.compile(r"^\s*subgraph\b", re.IGNORECASE)
 END_KW = re.compile(r"^\s*end\s*$", re.IGNORECASE)
 HEADER_KW = re.compile(
-    r"^\s*(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gantt|pie|quadrantChart|requirementDiagram|gitGraph|C4Context|C4Container|C4Component|C4Dynamic|C4Deployment)\b"
+    r"^\s*(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|"
+    r"journey|gantt|pie|quadrantChart|requirementDiagram|gitGraph|"
+    r"C4Context|C4Container|C4Component|C4Dynamic|C4Deployment)\b"
 )
 
 
@@ -85,22 +83,25 @@ def lint_block(block: Block) -> List[str]:
     issues: List[str] = []
     body = block.body
     if not body.strip():
-        issues.append("空 mermaid 块")
-        return issues
+        return [f"行 {block.start_line+1}: 空 mermaid 块"]
 
     lines = body.splitlines()
 
     # 1) header
     if not HEADER_KW.match(lines[0]):
-        issues.append(f"L{1}: 必须以 flowchart/graph/sequenceDiagram 等关键字开头，实际是 `{lines[0].strip()[:60]}`")
+        issues.append(
+            f"行 {block.start_line+1}: 缺 header（必须以 flowchart/graph/sequenceDiagram 等关键字开头），实际是 `{lines[0].strip()[:60]}`"
+        )
 
     # 2) subgraph / end 配对
     sub_count = sum(1 for ln in lines if SUBGRAPH.match(ln))
     end_count = sum(1 for ln in lines if END_KW.match(ln))
     if sub_count != end_count:
-        issues.append(f"subgraph({sub_count}) 与 end({end_count}) 数量不匹配")
+        issues.append(
+            f"行 {block.start_line+sub_count+1} 附近: subgraph({sub_count}) 与 end({end_count}) 数量不匹配"
+        )
 
-    # 3) 括号配对
+    # 3) 括号配对（注意：含于字符串/标签里也要算，但 mermaid 标签里一般用 ["..."]，括号配对实际指方括号/花括号/圆括号）
     open_sq = body.count("[")
     close_sq = body.count("]")
     open_cu = body.count("{")
@@ -108,36 +109,25 @@ def lint_block(block: Block) -> List[str]:
     open_ro = body.count("(")
     close_ro = body.count(")")
     if (open_sq - close_sq) % 2 != 0:
-        issues.append(f"[ 与 ] 数量不一致：{open_sq} vs {close_sq}")
+        issues.append(f"行 ? 附近: [ 与 ] 数量不一致：{open_sq} vs {close_sq}")
     if open_cu != close_cu:
-        issues.append(f"{{ 与 }} 数量不一致：{open_cu} vs {close_cu}")
+        issues.append(f"行 ? 附近: {{ 与 }} 数量不一致：{open_cu} vs {close_cu}")
     if open_ro != close_ro:
-        issues.append(f"( 与 ) 数量不一致：{open_ro} vs {close_ro}")
+        issues.append(f"行 ? 附近: ( 与 ) 数量不一致：{open_ro} vs {close_ro}")
 
-    # 4) 节点 ID 校验：flowchart 节点 ID 通常必须 [A-Za-z0-9_]（不允许中文 / 全角 / 横线）
-    #    找出"看起来像边定义"或"节点定义"的行：含 -- 或 --> 或 :::
-    for ln_no, ln in enumerate(lines, 1):
-        if "--" in ln:
-            # 简单扫：箭头前后不是合法 ID 字符
-            # 把箭头和边标签剥掉
-            stripped = re.sub(r"-->?\|[^|]*\|", "->", ln)
-            stripped = re.sub(r"-->?--?", "->", stripped)
-            stripped = re.sub(r"---", "->", stripped)
-            # 检查 \w 之外的非空白、非 ASCII 标点
-            # 允许的字符：[A-Za-z0-9_\s\[\](){}\->|.:/,"]
-            bad = re.findall(r"[^\w\s\[\]\{\}\(\)\->\|:/\.,\"\u4e00-\u9fff]", stripped)
-            if bad:
-                unique_bad = sorted(set(bad))
-                issues.append(
-                    f"L{ln_no}: 边/节点定义含可疑字符 {unique_bad} → {ln.strip()[:80]}"
-                )
+    # 4) 双引号配对
+    n_quote = body.count('"')
+    if n_quote % 2 != 0:
+        issues.append(f"双引号 \" 出现奇数次（{n_quote}），可能存在未闭合的字符串")
 
-        # 中文 / 全角字符在 ID 位置
-        for m in re.finditer(r"\b([\u4e00-\u9fff][\u4e00-\u9fffA-Za-z0-9_]*)\b", ln):
-            issues.append(
-                f"L{ln_no}: 节点 ID 含中文 `{m.group(1)}`，部分 mermaid 渲染器（GitHub 旧版）会失败，建议改成 ASCII ID + 中文放在标签"
-            )
-            break  # 每行只报一次
+    # 5) 边标签 -->|label| 中的 | 是否成对
+    n_pipe = 0
+    for ln in lines:
+        n_pipe += ln.count("-->|")
+    if n_pipe > 0:
+        n_close = body.count("|")
+        if n_close % 2 != 0:
+            issues.append(f"边标签 | 出现奇数次（{n_close}），可能存在未闭合的边标签")
 
     return issues
 
@@ -169,7 +159,7 @@ def main() -> int:
             else:
                 print(f"  [{b.index}] 行 {b.start_line}-{b.end_line} ✅")
     print()
-    print(f"汇总：{len(md_files)} 个 md / {total_blocks} 个 mermaid 块 / {total_issues} 个预检告警")
+    print(f"汇总：{len(md_files)} 个 md / {total_blocks} 个 mermaid 块 / {total_issues} 个硬错告警")
     if fail_files:
         print(f"有问题的文件：")
         for f in sorted(set(fail_files)):

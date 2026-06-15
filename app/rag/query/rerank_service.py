@@ -150,31 +150,27 @@ def dynamic_topk(merge_chunks_list):
     :param merge_chunks_list:
     :return:
     """
-    global topK
     max_number = RERANK_MAX_TOPK
     min_number = RERANK_MIN_TOPK
     gap_abs = RERANK_GAP_ABS
     gap_ratio = RERANK_GAP_RATIO
 
-    # max_number 大于列表长度
-    max_number  = min(max_number,len(merge_chunks_list))
+    max_number = min(max_number, len(merge_chunks_list))
 
-    # 没有断崖默认截取全部，循环目标寻找断崖，不跳出
+    # 初始化topK为max_number，当没有找到断崖时返回全部结果
+    topK = max_number
 
-    # 有可能  min > max
     if max_number > min_number:
-        # 其实位置 最大的位置下表 -1  =  max_number - 1 -1 前一个
-        for index in range(min_number,max_number-1):
-            score_1 = merge_chunks_list[index].get('score',0.0)
-            score_2 = merge_chunks_list[index+1].get('score',0.0)
-            # 不会出现负分，拉到 0-1
-            abs_score = score_1-score_2
+        for index in range(min_number, max_number - 1):
+            score_1 = merge_chunks_list[index].get('score', 0.0)
+            score_2 = merge_chunks_list[index + 1].get('score', 0.0)
+            abs_score = score_1 - score_2
             ratio_score = abs_score / (score_1 + 1e-7)
 
-            # 断崖判断
             if abs_score > gap_abs or ratio_score > gap_ratio:
                 topK = index + 1
                 break
+
     return merge_chunks_list[:topK]
 
 @step_log("rerank_documents")
@@ -227,7 +223,6 @@ def rerank_documents(state: QueryGraphState) -> QueryGraphState:
     state['reranked_docs'] = merge_chunks_list
 
     return state
-
 
 
 

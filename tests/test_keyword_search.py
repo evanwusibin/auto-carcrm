@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-关键词检索单元测试
+关键词检索单元测试（车辆相关测试数据）
 """
 import pytest
 from unittest.mock import patch, MagicMock
@@ -10,7 +10,7 @@ class TestNodeKeywordSearch:
     """测试关键词检索节点"""
 
     def test_search_with_fault_code(self):
-        """测试故障码检索"""
+        """测试故障码检索（P0A0F）"""
         from app.process.query.agent.nodes.node_keyword_search import node_keyword_search
 
         state = {
@@ -26,16 +26,15 @@ class TestNodeKeywordSearch:
             mock_search.return_value = {
                 **state,
                 "keyword_chunks": [
-                    {"chunk_id": "chunk-001", "content": "P0A0F故障码解释...", "score": 0.95},
+                    {"chunk_id": "chunk-001", "content": "P0A0F故障码：发动机控制系统故障", "score": 0.95},
                 ],
             }
             result = node_keyword_search(state)
 
-            assert "keyword_chunks" in result
-            assert len(result["keyword_chunks"]) > 0
+            assert result["keyword_chunks"][0]["content"] == "P0A0F故障码：发动机控制系统故障"
 
     def test_search_with_vehicle_model(self):
-        """测试车型检索"""
+        """测试车型检索（T5）"""
         from app.process.query.agent.nodes.node_keyword_search import node_keyword_search
 
         state = {
@@ -51,19 +50,44 @@ class TestNodeKeywordSearch:
             mock_search.return_value = {
                 **state,
                 "keyword_chunks": [
-                    {"chunk_id": "chunk-002", "content": "T5保养周期...", "score": 0.88},
+                    {"chunk_id": "chunk-002", "content": "T5保养周期：每5000公里或6个月", "score": 0.88},
                 ],
             }
             result = node_keyword_search(state)
 
-            assert result["keyword_chunks"][0]["content"] == "T5保养周期..."
+            assert "T5" in result["keyword_chunks"][0]["content"]
+
+    def test_search_with_component(self):
+        """测试部件检索（发动机）"""
+        from app.process.query.agent.nodes.node_keyword_search import node_keyword_search
+
+        state = {
+            "session_id": "test-003",
+            "rewritten_query": "发动机异响怎么修？",
+            "extracted_entities": {
+                "component": "发动机",
+                "fault_symptom": "发动机异响",
+            },
+            "is_stream": False,
+        }
+
+        with patch("app.process.query.agent.nodes.node_keyword_search.search_by_keywords") as mock_search:
+            mock_search.return_value = {
+                **state,
+                "keyword_chunks": [
+                    {"chunk_id": "chunk-003", "content": "发动机异响可能是由于皮带松弛", "score": 0.82},
+                ],
+            }
+            result = node_keyword_search(state)
+
+            assert "发动机" in result["keyword_chunks"][0]["content"]
 
     def test_search_with_empty_result(self):
         """测试无结果检索"""
         from app.process.query.agent.nodes.node_keyword_search import node_keyword_search
 
         state = {
-            "session_id": "test-003",
+            "session_id": "test-004",
             "rewritten_query": "不存在的问题",
             "extracted_entities": {},
             "is_stream": False,

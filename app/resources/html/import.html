@@ -561,8 +561,8 @@ tbody td { padding: 11px 16px; font-size: 13px; color: var(--gray-700); vertical
               <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
             </svg>
             <p><strong>点击选择文件</strong>，或将文件拖拽至此处</p>
-            <p class="file-hint">支持 PDF、Word、Excel、TXT、Markdown，单文件不超过 50MB</p>
-            <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.md">
+            <p class="file-hint">支持 PDF、Word(.docx)、Excel(.xlsx)、CSV、TXT、Markdown，单文件不超过 50MB</p>
+            <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md">
           </div>
           <div class="file-queue" id="fileQueue"></div>
         </div>
@@ -735,13 +735,16 @@ let allDocs = [
 ];
 
 const STEPS = [
-  {name:'文件上传',    desc:'校验文件完整性，写入临时存储'},
-  {name:'格式解析',    desc:'识别 PDF/Word/Excel 结构，提取文本'},
-  {name:'文本清洗',    desc:'去除页眉页脚、乱码及无效内容'},
-  {name:'Chunk 切分',  desc:'按章节/语义边界切分知识片段'},
-  {name:'Embedding 向量化', desc:'调用 bge-large-zh 生成向量'},
-  {name:'索引构建',    desc:'写入向量数据库并建立检索索引'},
-  {name:'待审核',      desc:'等待管理员审核后发布至知识库'},
+  {name:'检查文件',        desc:'校验文件完整性，识别文件类型',           node:'检查文件'},
+  {name:'PDF转Markdown',   desc:'解析 PDF 结构，提取文本为 Markdown',    node:'PDF转Markdown'},
+  {name:'Markdown图片处理', desc:'提取文档中的图片并做增强处理',          node:'Markdown图片处理'},
+  {name:'文档切分',        desc:'按章节/语义边界切分知识片段',            node:'文档切分'},
+  {name:'主体名称识别',    desc:'调用 LLM 识别文档对应的车型/部件名称',   node:'主体名称识别'},
+  {name:'向量生成',        desc:'调用 BGE-M3 模型生成 Embedding 向量',    node:'向量生成'},
+  {name:'导入向量库',      desc:'写入 Milvus 向量数据库并建立检索索引',   node:'导入向量库'},
+  {name:'元数据抽取',      desc:'抽取文档类型、车型、版本等元信息',       node:'元数据抽取'},
+  {name:'知识保存',        desc:'保存知识文档到 MongoDB',                node:'知识保存'},
+  {name:'审核发布',        desc:'发布至知识库，等待审核',                node:'审核发布'},
 ];
 
 // ─── File upload ───
@@ -788,6 +791,38 @@ function removeFile(i) { uploadQueue.splice(i,1); renderQueue(); }
 
 // ─── Submit ───
 document.getElementById('btn-submit').addEventListener('click', submitUpload);
+let pollTimer = null;
+let currentTaskId = null;
+
+// 页面加载时恢复未完成的任务轮询
+function restorePendingTask() {
+  const savedTaskId = localStorage.getItem('import_task_id');
+  const savedStatus = localStorage.getItem('import_task_status');
+  console.log('[Import] restorePendingTask 被调用');
+  console.log('[Import] localStorage:', { savedTaskId, savedStatus });
+  console.log('[Import] document.readyState:', document.readyState);
+  
+  if (savedTaskId && savedStatus === 'processing') {
+    console.log('[Import] 发现未完成任务，准备恢复:', savedTaskId);
+    currentTaskId = savedTaskId;
+    
+    // 检查DOM元素是否存在
+    const modal = document.getElementById('processModal');
+    const stepList = document.getElementById('stepList');
+    console.log('[Import] DOM元素:', { modal: !!modal, stepList: !!stepList });
+    
+    showProcessModal();
+    startPolling(currentTaskId);
+    console.log('[Import] 恢复完成');
+  } else {
+    console.log('[Import] 没有未完成的任务');
+  }
+}
+
+// 立即执行
+console.log('[Import] 脚本开始执行');
+restorePendingTask();
+
 function submitUpload() {
   const docType = document.getElementById('docType').value;
   const model   = document.getElementById('vehicleModel').value;
@@ -795,9 +830,51 @@ function submitUpload() {
   if (!docType) { showToast('请选择文档类型', 'warn'); document.getElementById('docType').classList.add('error'); return; }
   if (!model)   { showToast('请选择适用车型', 'warn'); document.getElementById('vehicleModel').classList.add('error'); return; }
   if (!ver)     { showToast('请填写版本号', 'warn'); document.getElementById('docVersion').classList.add('error'); return; }
+  if (!uploadQueue.length) { showToast('请先选择要导入的文件', 'warn'); return; }
   document.querySelectorAll('.form-control').forEach(e => e.classList.remove('error'));
+
+  // 真实上传文件到后端
   showProcessModal();
-  simulateProcess(0);
+  const formData = new FormData();
+  formData.append('files', uploadQueue[0].file);
+  
+  // 添加表单元数据
+  formData.append('doc_type', docType);
+  formData.append('vehicle_model', model);
+  formData.append('version', ver);
+  formData.append('component', document.getElementById('docComponent').value || '');
+  formData.append('effective_date', document.getElementById('effectiveDate').value || '');
+  formData.append('expire_date', document.getElementById('expireDate').value || '');
+  formData.append('visible_roles', document.getElementById('visibleRoles').value || 'all');
+  formData.append('remark', document.getElementById('docRemark').value || '');
+
+  const token = localStorage.getItem('token') || '';
+  fetch('/api/v1/knowledge/upload', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token },
+    body: formData,
+  })
+  .then(r => r.json())
+  .then(json => {
+    const data = json.data || json;
+    const taskIds = data.task_ids || [];
+    if (!taskIds.length) { showToast('上传失败：未返回 task_id', 'error'); return; }
+    currentTaskId = taskIds[0];
+    // 保存任务状态到localStorage
+    localStorage.setItem('import_task_id', currentTaskId);
+    localStorage.setItem('import_task_status', 'processing');
+    console.log('[Import] 任务已保存到localStorage:', currentTaskId);
+    console.log('[Import] 验证localStorage:', {
+      id: localStorage.getItem('import_task_id'),
+      status: localStorage.getItem('import_task_status')
+    });
+    showToast('文件已上传，开始处理...', 'info');
+    startPolling(currentTaskId);
+  })
+  .catch(err => {
+    showToast('上传请求失败: ' + err.message, 'error');
+    console.error('上传失败', err);
+  });
 }
 
 // ─── Process modal ───
@@ -817,29 +894,77 @@ function showProcessModal() {
   modal.classList.add('show');
 }
 
-function simulateProcess(idx) {
-  if (idx >= STEPS.length) {
+// ─── 真实轮询后端状态 ───
+function startPolling(taskId) {
+  console.log('[Import] startPolling called with taskId:', taskId);
+  const token = localStorage.getItem('token') || '';
+  pollTimer = setInterval(async () => {
+    try {
+      const resp = await fetch('/api/v1/knowledge/status/' + taskId, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const json = await resp.json();
+      const data = json.data || json;
+      console.log('[Import] 轮询状态:', data);
+      updateStepsFromStatus(data);
+      if (data.status === 'completed' || data.status === 'failed') {
+        console.log('[Import] 任务完成，停止轮询');
+        clearInterval(pollTimer);
+        pollTimer = null;
+        onProcessDone(data.status);
+      }
+    } catch (e) {
+      console.error('轮询状态失败', e);
+    }
+  }, 500);
+}
+
+function updateStepsFromStatus(data) {
+  const doneList = (data.done_list || []).map(n => n.trim());
+  const runList  = (data.running_list || []).map(n => n.trim());
+  const doneSet = new Set(doneList);
+  const runSet  = new Set(runList);
+
+  STEPS.forEach((step, idx) => {
+    const row = document.getElementById('step-' + idx);
+    const st  = document.getElementById('step-status-' + idx);
+    if (!row) return;
+    const cn = step.node;  // 中文节点名，与后端 _NODE_NAME_TO_CN 对应
+    row.classList.remove('active', 'done', 'error');
+    if (doneSet.has(cn)) {
+      row.classList.add('done');
+      st.textContent = '完成';
+    } else if (runSet.has(cn)) {
+      row.classList.add('active');
+      st.innerHTML = '<span class="spin-sm"></span> 处理中';
+    }
+    // 其余保持"等待中"
+  });
+}
+
+function onProcessDone(status) {
+  // 清除localStorage中的任务状态
+  localStorage.removeItem('import_task_id');
+  localStorage.removeItem('import_task_status');
+
+  if (status === 'completed') {
     document.getElementById('modalSubTitle').textContent = '处理完成，已进入待审核队列';
-    document.getElementById('btn-modal-close').style.display = '';
     addDemoRow();
     updateStats();
-    return;
+    showToast('导入处理完成！', 'success');
+  } else {
+    document.getElementById('modalSubTitle').textContent = '处理失败，请查看日志';
+    showToast('导入处理失败', 'error');
   }
-  const row    = document.getElementById('step-' + idx);
-  const status = document.getElementById('step-status-' + idx);
-  row.classList.remove('active','done','error');
-  row.classList.add('active');
-  status.innerHTML = `<span class="spin-sm"></span> 处理中`;
-  const delay = 600 + Math.random() * 500;
-  setTimeout(() => {
-    row.classList.remove('active');
-    row.classList.add('done');
-    status.innerHTML = `完成`;
-    simulateProcess(idx + 1);
-  }, delay);
+  document.getElementById('btn-modal-close').style.display = '';
 }
 
 function closeModal() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  currentTaskId = null;
+  // 清除localStorage中的任务状态
+  localStorage.removeItem('import_task_id');
+  localStorage.removeItem('import_task_status');
   document.getElementById('processModal').classList.remove('show');
   uploadQueue = [];
   renderQueue();

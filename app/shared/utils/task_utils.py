@@ -37,6 +37,9 @@ _NODE_NAME_TO_CN: Dict[str, str] = {
     "node_bge_embedding": "向量生成",
     "node_import_kg": "导入知识图谱",
     "node_import_milvus": "导入向量库",
+    "node_doc_meta": "元数据抽取",
+    "node_save_knowledge": "知识保存",
+    "node_publish": "审核发布",
     "__end__": "处理完成",
     "END": "处理完成",
     # --- Query 流程节点（kb/process/query/main_graph.py）---

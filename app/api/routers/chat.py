@@ -98,6 +98,35 @@ def chat_stream(session_id: str, request: Request):
 
 
 # ---------- 3. 历史记录 ----------
+def _serialize_items(items: list[dict]) -> list[dict]:
+    """将 MongoDB 文档转为可 JSON 序列化的 dict（ObjectId → str）。"""
+    result = []
+    for item in items:
+        row = {}
+        for k, v in item.items():
+            if k == '_id':
+                row[k] = str(v)
+            elif hasattr(v, 'isoformat'):
+                row[k] = v.isoformat()
+            else:
+                row[k] = v
+        result.append(row)
+    return result
+
+
+@router.get('/sessions')
+def chat_sessions(
+    limit: int = Query(20, ge=1, le=100, description='最多返回多少个会话'),
+    user: CurrentUser = Depends(get_current_user),
+):
+    """获取所有会话列表（按最近活跃时间倒序）。"""
+    items = query_page.get_sessions(limit=limit)
+    return success_response(
+        {'items': _serialize_items(items)},
+        message='会话列表查询成功',
+    )
+
+
 @router.get('/history/{session_id}')
 def chat_history(
     session_id: str,
@@ -107,7 +136,7 @@ def chat_history(
     """拉取指定 session 的历史消息（按时间倒序最近 limit 条）。"""
     items = query_page.get_history(session_id=session_id, limit=limit)
     return success_response(
-        {'session_id': session_id, 'limit': limit, 'items': items},
+        {'session_id': session_id, 'limit': limit, 'items': _serialize_items(items)},
         message='历史记录查询成功',
     )
 

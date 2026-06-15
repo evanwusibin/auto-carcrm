@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-结构化查询单元测试
+结构化查询单元测试（车辆相关测试数据）
 """
 import pytest
 from unittest.mock import patch, MagicMock
@@ -10,7 +10,7 @@ class TestNodeStructuredQuery:
     """测试结构化查询节点"""
 
     def test_query_with_vehicle_info(self):
-        """测试车辆信息查询"""
+        """测试车辆信息查询（T5）"""
         from app.process.query.agent.nodes.node_structured_query import node_structured_query
 
         state = {
@@ -27,13 +27,12 @@ class TestNodeStructuredQuery:
             mock_query.return_value = {
                 **state,
                 "structured_chunks": [
-                    {"chunk_id": "vehicle_001", "content": "车辆信息：T5...", "type": "vehicle_info", "score": 1.0},
+                    {"chunk_id": "vehicle_001", "content": "T5车辆信息：购买日期2024-01-01，里程50000公里", "type": "vehicle_info", "score": 1.0},
                 ],
             }
             result = node_structured_query(state)
 
-            assert "structured_chunks" in result
-            assert len(result["structured_chunks"]) > 0
+            assert "T5" in result["structured_chunks"][0]["content"]
 
     def test_query_with_maintenance_records(self):
         """测试保养记录查询"""
@@ -52,19 +51,43 @@ class TestNodeStructuredQuery:
             mock_query.return_value = {
                 **state,
                 "structured_chunks": [
-                    {"chunk_id": "maintenance_001", "content": "保养记录：2024-01-01...", "type": "maintenance_record", "score": 0.9},
+                    {"chunk_id": "maintenance_001", "content": "保养记录：2024-06-01，里程45000公里，更换机油", "type": "maintenance_record", "score": 0.9},
                 ],
             }
             result = node_structured_query(state)
 
-            assert result["structured_chunks"][0]["type"] == "maintenance_record"
+            assert "保养记录" in result["structured_chunks"][0]["content"]
+
+    def test_query_with_warranty_policy(self):
+        """测试质保规则查询"""
+        from app.process.query.agent.nodes.node_structured_query import node_structured_query
+
+        state = {
+            "session_id": "test-003",
+            "rewritten_query": "发动机质保多久？",
+            "extracted_entities": {
+                "component": "发动机",
+            },
+            "is_stream": False,
+        }
+
+        with patch("app.process.query.agent.nodes.node_structured_query.query_structured_data") as mock_query:
+            mock_query.return_value = {
+                **state,
+                "structured_chunks": [
+                    {"chunk_id": "warranty_001", "content": "质保规则：发动机质保3年或10万公里", "type": "warranty_policy", "score": 0.8},
+                ],
+            }
+            result = node_structured_query(state)
+
+            assert "发动机" in result["structured_chunks"][0]["content"]
 
     def test_query_with_empty_result(self):
         """测试无结果查询"""
         from app.process.query.agent.nodes.node_structured_query import node_structured_query
 
         state = {
-            "session_id": "test-003",
+            "session_id": "test-004",
             "rewritten_query": "不存在的问题",
             "extracted_entities": {},
             "is_stream": False,
@@ -133,7 +156,7 @@ class TestStructuredQueryService:
         from app.rag.query.structured_query_service import query_warranty_policies
 
         entities = {
-            "vehicle_model": "T5",
+            "component": "发动机",
         }
 
         result = query_warranty_policies(entities)

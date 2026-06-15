@@ -45,14 +45,12 @@ def _sse_pack(event: str, data: Dict[str, Any]) -> str:
 
 def push_to_session(session_id: str, event: str, data: Dict[str, Any]):
     """
-    通过 session_id 推送事件
+    通过 session_id 推送事件。如果队列不存在则自动创建。
     """
     stream_queue = get_sse_queue(session_id)
-    if stream_queue:
-        # print(f"[SSE] Pushing to session {session_id}: {event}")
-        stream_queue.put({"event": event, "data": data})
-    else:
-        print(f"[SSE] Warning: No queue found for session {session_id} when pushing {event}")
+    if stream_queue is None:
+        stream_queue = create_sse_queue(session_id)
+    stream_queue.put({"event": event, "data": data})
 
 async def sse_generator(session_id: str, request: Request):
     """

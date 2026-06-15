@@ -36,32 +36,43 @@ def validate_intent_state(state: QueryGraphState):
 def recognize_intent(state: QueryGraphState) -> QueryGraphState:
     """
     意图识别主函数（参考老师 answer_service.py 风格）
-    
+
     输入：state（包含 rewritten_query）
     输出：state（新增 intent 字段）
     """
     # 1. 校验参数
     rewritten_query = validate_intent_state(state)
-    
-    # 2. 获取 LLM 客户端
+
+    # 2. 获取历史对话上下文
+    history_messages = state.get("history") or []
+    history_text = ""
+    for msg in history_messages:
+        role = msg.get("role", "")
+        text = msg.get("text", "")
+        if role and text:
+            history_text += f"{role}: {text}\n"
+    if not history_text:
+        history_text = "（无历史对话）"
+
+    # 3. 获取 LLM 客户端
     llm_client = llm_provider.chat()
-    
-    # 3. 加载提示词
-    prompt_text = load_prompt("intent_recognition", rewritten_query=rewritten_query)
-    
-    # 4. 构建消息
+
+    # 4. 加载提示词
+    prompt_text = load_prompt("intent_recognition", query=rewritten_query, history=history_text)
+
+    # 5. 构建消息
     messages = [HumanMessage(content=prompt_text)]
-    
-    # 5. 调用 LLM（参考老师的写法）
+
+    # 6. 调用 LLM（参考老师的写法）
     response = llm_client.invoke(messages)
     intent_type = response.content.strip().lower()
-    
-    # 6. 校验意图类型是否有效
+
+    # 7. 校验意图类型是否有效
     if intent_type not in INTENT_TYPES:
         logger.warning(f"识别到未知意图类型：{intent_type}，默认设为 after_sales_service")
         intent_type = "after_sales_service"
-    
-    # 7. 写入 state
+
+    # 8. 写入 state
     state["intent"] = intent_type
     
     logger.info(f"意图识别完成：{rewritten_query} → {intent_type}（{INTENT_TYPES[intent_type]}）")

@@ -39,7 +39,7 @@ def build_document_context(chunks) ->str:
     :param chunks:
     :return:
     """
-    # 1、截取top k chunks  如果老是截取不到就加大点 config
+    # 1、截取top k chunks  如果老是截取不到就加大点 config  获取前几个切片
     top_chunk = chunks[:ITEM_NAME_CONTEXT_CHUNK_K]
     # 2、拼接上下文
     # 切片 1、标题 x 父标题 x 内容 \n
@@ -82,8 +82,14 @@ def recognize_item_name(context, file_title) -> str:
     item_name = chains.invoke(message)
     logger.info(f"调用模型识别完毕item_name: {item_name}")
     # 6、进行非空判断和兜底复制
-    if not item_name:
+    # 清理LLM返回的值（去掉引号、空白等）
+    item_name = item_name.strip().strip('"').strip("'").strip()
+    if not item_name or item_name == '""' or item_name == "''":
         item_name = file_title
+    # 如果file_title也为空，使用默认值
+    if not item_name:
+        item_name = "未知文档"
+    logger.info(f"最终识别的item_name: {item_name}")
     # 7、返回item_name
     return item_name
 

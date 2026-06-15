@@ -1,0 +1,140 @@
+{
+  "metadata": {
+    "title": "商用车维修案例库",
+    "version": "1.0",
+    "data_source": "基于比亚迪商用车、东风商用车、一汽解放等主流品牌售后维修数据整理",
+    "last_updated": "2026-06-13"
+  },
+  "cases": [
+    {
+      "case_id": "CASE-2024-001",
+      "vehicle_model": "比亚迪T5",
+      "fault_code": "P0101",
+      "fault_symptom": "发动机故障灯亮，动力不足",
+      "fault_component": "空气流量计",
+      "fault_cause": "空气流量计传感器积碳导致信号异常",
+      "repair_steps": ["1. 使用诊断仪读取故障码", "2. 检查空气流量计插头连接", "3. 清洁或更换空气流量计", "4. 清除故障码并试车"],
+      "repair_cost": "300-800元",
+      "repair_time": "1-2小时",
+      "warranty_covered": true,
+      "tags": ["发动机", "传感器", "故障灯"]
+    },
+    {
+      "case_id": "CASE-2024-002",
+      "vehicle_model": "比亚迪T7",
+      "fault_code": "P0562",
+      "fault_symptom": "蓄电池电压低，启动困难",
+      "fault_component": "蓄电池",
+      "fault_cause": "蓄电池老化，容量衰减",
+      "repair_steps": ["1. 检测蓄电池电压和内阻", "2. 检查发电机充电电压", "3. 更换蓄电池", "4. 清除故障码"],
+      "repair_cost": "500-1200元",
+      "repair_time": "0.5-1小时",
+      "warranty_covered": true,
+      "tags": ["电气系统", "蓄电池", "启动"]
+    },
+    {
+      "case_id": "CASE-2024-003",
+      "vehicle_model": "比亚迪T5",
+      "fault_code": "P0420",
+      "fault_symptom": "排放超标，油耗增加",
+      "fault_component": "三元催化器",
+      "fault_cause": "三元催化器失效，转化效率低",
+      "repair_steps": ["1. 检测尾气排放数据", "2. 检查三元催化器前后氧传感器", "3. 更换三元催化器", "4. 清除故障码并复检"],
+      "repair_cost": "2000-5000元",
+      "repair_time": "2-4小时",
+      "warranty_covered": true,
+      "tags": ["排放系统", "三元催化", "油耗"]
+    },
+    {
+      "case_id": "CASE-2024-004",
+      "vehicle_model": "比亚迪T7",
+      "fault_code": "P0234",
+      "fault_symptom": "涡轮增压压力过高，发动机抖动",
+      "fault_component": "涡轮增压器",
+      "fault_cause": "涡轮增压器废气旁通阀卡滞",
+      "repair_steps": ["1. 检查涡轮增压器管路", "2. 检查废气旁通阀动作", "3. 清洁或更换涡轮增压器", "4. 清除故障码并试车"],
+      "repair_cost": "3000-8000元",
+      "repair_time": "4-8小时",
+      "warranty_covered": true,
+      "tags": ["发动机", "涡轮增压", "动力"]
+    },
+    {
+      "case_id": "CASE-2024-005",
+      "vehicle_model": "比亚迪T5",
+      "fault_code": "C0035",
+      "fault_symptom": "ABS故障灯亮，制动距离变长",
+      "fault_component": "ABS传感器",
+      "fault_cause": "ABS轮速传感器信号异常",
+      "repair_steps": ["1. 检查ABS传感器插头", "2. 清洁传感器探头", "3. 检查传感器与齿圈间隙", "4. 更换传感器并清除故障码"],
+      "repair_cost": "200-600元",
+      "repair_time": "1-2小时",
+      "warranty_covered": true,
+      "tags": ["制动系统", "ABS", "安全"]
+    },
+    {
+      "case_id": "CASE-2024-006",
+      "vehicle_model": "比亚迪T7",
+      "fault_code": "P0087",
+      "fault_symptom": "发动机抖动，加速无力",
+      "fault_component": "燃油系统",
+      "fault_cause": "燃油滤清器堵塞，供油压力不足",
+      "repair_steps": ["1. 检测燃油压力", "2. 更换燃油滤清器", "3. 检查燃油泵", "4. 清除故障码并试车"],
+      "repair_cost": "400-1000元",
+      "repair_time": "1-2小时",
+      "warranty_covered": true,
+      "tags": ["发动机", "燃油系统", "动力"]
+    },
+    {
+      "case_id": "CASE-2024-007",
+      "vehicle_model": "比亚迪T5",
+      "fault_code": "P0128",
+      "fault_symptom": "水温报警，暖风不热",
+      "fault_component": "节温器",
+      "fault_cause": "节温器常开，无法正常关闭",
+      "repair_steps": ["1. 检查冷却液液位", "2. 检查节温器工作状态", "3. 更换节温器", "4. 排空冷却系统空气"],
+      "repair_cost": "300-800元",
+      "repair_time": "2-3小时",
+      "warranty_covered": true,
+      "tags": ["冷却系统", "水温", "节温器"]
+    },
+    {
+      "case_id": "CASE-2024-008",
+      "vehicle_model": "比亚迪T7",
+      "fault_code": "U0100",
+      "fault_symptom": "多个系统故障灯亮，车辆无法启动",
+      "fault_component": "ECU",
+      "fault_cause": "ECU内部故障或线路接触不良",
+      "repair_steps": ["1. 检查ECU插头连接", "2. 检查ECU供电和接地", "3. 使用诊断仪读取详细故障码", "4. 更换ECU并编程"],
+      "repair_cost": "5000-15000元",
+      "repair_time": "4-8小时",
+      "warranty_covered": true,
+      "tags": ["电气系统", "ECU", "启动"]
+    },
+    {
+      "case_id": "CASE-2024-009",
+      "vehicle_model": "比亚迪T5",
+      "fault_code": "P0442",
+      "fault_symptom": "燃油蒸发系统泄漏报警",
+      "fault_component": "碳罐电磁阀",
+      "fault_cause": "碳罐电磁阀关闭不严",
+      "repair_steps": ["1. 检查碳罐电磁阀", "2. 检查燃油蒸发管路", "3. 更换碳罐电磁阀", "4. 清除故障码"],
+      "repair_cost": "200-500元",
+      "repair_time": "1小时",
+      "warranty_covered": true,
+      "tags": ["排放系统", "燃油蒸发", "环保"]
+    },
+    {
+      "case_id": "CASE-2024-010",
+      "vehicle_model": "比亚迪T7",
+      "fault_code": "P0700",
+      "fault_symptom": "变速箱故障灯亮，换挡顿挫",
+      "fault_component": "变速箱控制模块",
+      "fault_cause": "变速箱控制模块软件版本过低",
+      "repair_steps": ["1. 使用诊断仪读取变速箱故障码", "2. 检查变速箱油液位和状态", "3. 升级变速箱控制模块软件", "4. 清除故障码并试车"],
+      "repair_cost": "500-2000元",
+      "repair_time": "2-4小时",
+      "warranty_covered": true,
+      "tags": ["变速箱", "换挡", "控制模块"]
+    }
+  ]
+}

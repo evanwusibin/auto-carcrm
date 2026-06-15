@@ -162,3 +162,14 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+
+# === project-specific (added for gitee push) ===
+# MinerU 生成的解析产物（可本地重建，不进历史）
+output/
+# IDE
+.idea/
+# 调试截图（playwright 测试产物）
+/*.png
+# mermaid 校验/解析中间产物
+.mermaid_check/
+.mermaid_extracts/__parse_report.json

@@ -1,110 +1,84 @@
 # -*- coding: utf-8 -*-
-"""
-结构化查询服务
-作用：查询车辆档案、保养记录、质保规则等结构化数据
-参考老师 answer_service.py 的代码风格
-"""
-from app.shared.runtime.logger import logger, step_log
+"""结构化查询服务"""
+from app.infra.persistence.knowledge_repository import knowledge_repository
 from app.process.query.agent.state import QueryGraphState
+from app.shared.runtime.logger import logger, step_log
 
 
-@step_log("validate_structured_state")
-def validate_structured_state(state: QueryGraphState):
-    """校验结构化查询所需参数"""
-    rewritten_query = state.get("rewritten_query")
+@step_log("validate_structured_query_state")
+def validate_structured_query_state(state: QueryGraphState):
+    item_names = state.get("item_names", [])
+    rewritten_query = state.get("rewritten_query", "")
+    extracted_entities = state.get("extracted_entities", {}) or {}
+    if not item_names:
+        logger.error("item_names not exist")
+        raise ValueError("item_names not exist")
     if not rewritten_query:
-        logger.error("rewritten_query 为空，无法进行结构化查询")
-        raise ValueError("rewritten_query 为空，无法进行结构化查询")
-    return rewritten_query
+        logger.error("rewritten_query not exist")
+        raise ValueError("rewritten_query not exist")
+    return item_names, rewritten_query, extracted_entities
 
 
-def query_vehicle_info(entities: dict) -> list[dict]:
-    """
-    查询车辆档案
-    
-    输入：entities（实体字典，包含 vehicle_model、vin 等）
-    输出：vehicle_info（车辆信息列表）
-    """
-    # TODO: 查询 MongoDB vehicles 集合
-    # 暂时返回空列表，后续实现 MongoDB 查询
-    return []
+@step_log("search_structured_documents")
+def search_structured_documents(item_names: list[str], rewritten_query: str, extracted_entities: dict):
+    query_terms = {term for term in rewritten_query.lower().split() if term.strip()}
+    vehicle_model = str(extracted_entities.get("vehicle_model") or extracted_entities.get("model") or "").strip()
+    doc_type = str(extracted_entities.get("doc_type") or extracted_entities.get("document_type") or "").strip()
 
+    documents = []
+    for item_name in item_names:
+        documents.extend(knowledge_repository.find_by_item_name(item_name))
 
-def query_maintenance_records(entities: dict) -> list[dict]:
-    """
-    查询保养记录
-    
-    输入：entities（实体字典）
-    输出：maintenance_records（保养记录列表）
-    """
-    # TODO: 查询 MongoDB maintenance_records 集合
-    # 暂时返回空列表，后续实现 MongoDB 查询
-    return []
-
-
-def query_warranty_policies(entities: dict) -> list[dict]:
-    """
-    查询质保规则
-    
-    输入：entities（实体字典）
-    输出：warranty_policies（质保规则列表）
-    """
-    # TODO: 查询 MongoDB warranty_policies 集合
-    # 暂时返回空列表，后续实现 MongoDB 查询
-    return []
-
-
-def query_structured_data(state: QueryGraphState) -> QueryGraphState:
-    """
-    结构化查询主函数（参考老师 answer_service.py 风格）
-    
-    输入：state（包含 rewritten_query, extracted_entities）
-    输出：state（新增 structured_chunks 字段）
-    """
-    # 1. 校验参数
-    rewritten_query = validate_structured_state(state)
-    
-    # 2. 提取实体
-    entities = state.get("extracted_entities", {})
-    
-    # 3. 查询各类结构化数据
-    vehicle_info = query_vehicle_info(entities)
-    maintenance_records = query_maintenance_records(entities)
-    warranty_policies = query_warranty_policies(entities)
-    
-    # 4. 合并结果
     structured_chunks = []
-    
-    # 车辆档案
-    for info in vehicle_info:
-        structured_chunks.append({
-            "chunk_id": f"vehicle_{info.get('vin', 'unknown')}",
-            "content": f"车辆信息：{info}",
-            "type": "vehicle_info",
-            "score": 1.0,
-        })
-    
-    # 保养记录
-    for record in maintenance_records:
-        structured_chunks.append({
-            "chunk_id": f"maintenance_{record.get('id', 'unknown')}",
-            "content": f"保养记录：{record}",
-            "type": "maintenance_record",
-            "score": 0.9,
-        })
-    
-    # 质保规则
-    for policy in warranty_policies:
-        structured_chunks.append({
-            "chunk_id": f"warranty_{policy.get('id', 'unknown')}",
-            "content": f"质保规则：{policy}",
-            "type": "warranty_policy",
-            "score": 0.8,
-        })
-    
-    # 5. 写入 state
-    state["structured_chunks"] = structured_chunks
-    
-    logger.info(f"结构化查询完成：{rewritten_query} → {len(structured_chunks)} 条结果")
-    
+    for document in documents:
+        content_parts = [
+            str(document.get("title", "")),
+            str(document.get("item_name", "")),
+            str(document.get("vehicle_model", "")),
+            str(document.get("version", "")),
+            str(document.get("doc_type", "")),
+            " ".join(str(tag) for tag in document.get("tags", [])),
+        ]
+        search_text = " ".join(content_parts).lower()
+        score = sum(search_text.count(term) for term in query_terms)
+        if vehicle_model and vehicle_model.lower() and vehicle_model.lower() in search_text:
+            score += 2
+        if doc_type and doc_type.lower() and doc_type.lower() in search_text:
+            score += 2
+        if score <= 0:
+            continue
+
+        structured_chunks.append(
+            {
+                "chunk_id": str(document.get("_id")),
+                "item_name": document.get("item_name", ""),
+                "title": document.get("title", ""),
+                "parent_title": "知识文档元数据",
+                "part": 0,
+                "file_title": document.get("title", ""),
+                "content": (
+                    f"文档名称：{document.get('title', '')}\n"
+                    f"主体名称：{document.get('item_name', '')}\n"
+                    f"车型：{document.get('vehicle_model', '')}\n"
+                    f"版本：{document.get('version', '')}\n"
+                    f"文档类型：{document.get('doc_type', '')}\n"
+                    f"状态：{document.get('status', '')}\n"
+                    f"标签：{', '.join(document.get('tags', [])) if document.get('tags') else '无'}"
+                ),
+                "score": float(score),
+                "type": "structured",
+                "url": None,
+            }
+        )
+
+    structured_chunks.sort(key=lambda item: item.get("score", 0.0), reverse=True)
+    return structured_chunks[:5]
+
+
+@step_log("query_structured_data")
+def query_structured_data(state: QueryGraphState) -> QueryGraphState:
+    logger.info("[structured_query] 结构化查询开始")
+    item_names, rewritten_query, extracted_entities = validate_structured_query_state(state)
+    state["structured_chunks"] = search_structured_documents(item_names, rewritten_query, extracted_entities)
+    logger.info(f"[structured_query] 结构化查询完成，召回 {len(state['structured_chunks'])} 条")
     return state

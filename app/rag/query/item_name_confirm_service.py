@@ -44,9 +44,6 @@ def get_history_message(session_id,limit:int=10)->list[dict]:
 
 
 
-
-
-
 # 3、拼接历史聊天记录 输入：有效的历史消息列表 输出：str history_text
 def build_history_context_text(history_message_list:list[dict])-> str:
     """
@@ -171,85 +168,63 @@ def query_item_name_milvus(item_names:list[str])->dict[str,list[dict]]:
 
 
 # 6、最后确认和明确item_name  输入的是llm输出的items列表 输入：{item_name: [{item_name:库里, score:0.8}, ...]}    输出：{确认列表: [], 可选列表: []}
+CONFIRM_THRESHOLD = 0.55
+CANDIDATE_THRESHOLD = 0.45
+
+
 def select_item_names(milvus_result_dic):
     """
-      根据现有的数据,确定可选或者确认列表!
-         {
-           item_name :  [{item_name:数据库,score:0.72},{...}],  确认 1  可选 2
-           item_name :  [{item_name:数据库,score:0.72},{...}],  确认 1  可选 2
-           item_name :  [{item_name:数据库,score:0.72},{...}]   确认 1  可选 2
-         }
-    :param milvus_result_dict:
-    :return:
+    根据向量检索分数，将 Milvus 返回结果分为确认列表和候选列表。
+    确认列表：score >= CONFIRM_THRESHOLD
+    候选列表：CANDIDATE_THRESHOL D < score < CONFIRM_THRESHOLD
     """
-    # 1 定义两个列表
     confirm_item_name_list = []
     options_item_name_list = []
 
-    # 2、 循环处理每一个item_name 对应的列表
-    for item_name ,milvus_list in milvus_result_dic.items():
-        # 没必要
-        milvus_list.sort(key = lambda x:x['score'],reverse=True)
-        # 筛选列表 高分[>0.7]  可选 [0.6 - 0.7]
-        high_item_names = [item['item_name'] for item in milvus_list if item['score']>=0.6]
-        md_item_names = [item['item_name'] for item in milvus_list if 0.5<item['score']<0.6]
+    for item_name, milvus_list in milvus_result_dic.items():
+        milvus_list.sort(key=lambda x: x['score'], reverse=True)
+        high_item_names = [item['item_name'] for item in milvus_list if item['score'] >= CONFIRM_THRESHOLD]
+        md_item_names = [item['item_name'] for item in milvus_list if CANDIDATE_THRESHOLD < item['score'] < CONFIRM_THRESHOLD]
 
-        # 添加确认列表 1个
-        if len(high_item_names)>0:
+        if len(high_item_names) > 0:
             confirm_item_name_list.append(high_item_names[0])
             continue
-        # 没哟可以确认的可选的
-        if len(md_item_names)>0:
-            # 注意  可能是多个，所以要继承   只能extend，平铺，用append就会列表套列表
+        if len(md_item_names) > 0:
             options_item_name_list.extend(md_item_names[:2])
             continue
+
     return {
-        "confirmed_item_name_list":confirm_item_name_list,
-        "options_item_name_list":options_item_name_list
+        "confirmed_item_name_list": confirm_item_name_list,
+        "options_item_name_list": options_item_name_list
     }
 
 
 
 # 7、返回最终的状态状态修改  确认列表和可选列表   重写的问题  输入：确认列表, 可选列表, rewritten_query   输出：state
-def change_state_status(state:QueryGraphState,item_name_dict,rewritten_query:str):
+def change_state_status(state: QueryGraphState, item_name_dict, rewritten_query: str):
     """
-     修改state状态
-        确认列表有值
-            item_names = 确认列表
-            rewritten_query = rewritten_query
-            return
-        可选列表有值
-            rewritten_query = rewritten_query
-            answer = 客客气气...
-            return
-        都没有值
-            rewritten_query = rewritten_query
-            answer = 客客气气...
-            return
-    :param state:
-    :param item_name_dict:
-    :param rewritten_query:
-    :return:
+    修改 state 状态，区分三种情况：
+    1. 有确认主体 → 直接赋值 item_names，继续主链路
+    2. 有候选主体 → 设置 candidate_item_names + answer，提前返回让用户选择
+    3. 都没有 → 设置 answer 提示无匹配，提前返回
     """
-    confirm_item_name_list = item_name_dict.get('confirmed_item_name_list',[])
-    options_item_name_list = item_name_dict.get('options_item_name_list',[])
+    confirm_item_name_list = item_name_dict.get('confirmed_item_name_list', [])
+    options_item_name_list = item_name_dict.get('options_item_name_list', [])
 
-    if confirm_item_name_list and len(confirm_item_name_list)>0:
-        # 有确认的
+    if confirm_item_name_list and len(confirm_item_name_list) > 0:
         state['item_names'] = confirm_item_name_list
         state['rewritten_query'] = rewritten_query
         return
 
-
-    if options_item_name_list and len(options_item_name_list)>0:
+    if options_item_name_list and len(options_item_name_list) > 0:
         state['rewritten_query'] = rewritten_query
-        answer = f"你是要询问：{','.join(options_item_name_list)} 这些内容嘛？  请确认！！！"
-        state['answer'] =  answer
-        return state
+        state['candidate_item_names'] = options_item_name_list
+        names_text = '、'.join(options_item_name_list)
+        state['answer'] = f"没有找到完全匹配的主体，请确认您要查询的是以下哪个：{names_text}"
+        return
 
     state['rewritten_query'] = rewritten_query
-    answer = f"完全没有识别到你说的主体，请确认有没有上传过这个主体的文件信息，再提问！！！"
-    state['answer'] = answer
+    state['answer'] = "没有识别到相关的知识主体。请确认是否已上传对应资料，或尝试更具体地描述您要查询的内容。"
 
 
 # 8、保存聊天记录

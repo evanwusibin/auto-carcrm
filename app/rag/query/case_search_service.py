@@ -1,87 +1,78 @@
 # -*- coding: utf-8 -*-
-"""
-案例检索服务
-作用：从典型案例库中检索相似故障案例
-参考老师 answer_service.py 的代码风格
-"""
-from app.shared.runtime.logger import logger, step_log
-from app.process.query.agent.state import QueryGraphState
+"""案例检索服务"""
 from app.infra.vectorstore.milvus_gateway import milvus_gateway
-from app.infra.llm.providers import llm_provider
+from app.process.query.agent.state import QueryGraphState
+from app.shared.runtime.logger import logger, step_log
 
 
-@step_log("validate_case_state")
-def validate_case_state(state: QueryGraphState):
-    """校验案例检索所需参数"""
-    rewritten_query = state.get("rewritten_query")
+@step_log("validate_case_search_state")
+def validate_case_search_state(state: QueryGraphState):
+    item_names = state.get("item_names", [])
+    rewritten_query = state.get("rewritten_query", "")
+    if not item_names:
+        logger.error("item_names not exist")
+        raise ValueError("item_names not exist")
     if not rewritten_query:
-        logger.error("rewritten_query 为空，无法进行案例检索")
-        raise ValueError("rewritten_query 为空，无法进行案例检索")
-    return rewritten_query
+        logger.error("rewritten_query not exist")
+        raise ValueError("rewritten_query not exist")
+    return item_names, rewritten_query
 
 
+@step_log("search_case_chunks")
+def search_case_chunks(item_names: list[str], rewritten_query: str):
+    result = milvus_gateway.client.query(
+        collection_name=milvus_gateway.chunk_collection_name,
+        filter=f"item_name in {item_names}",
+        output_fields=[
+            "chunk_id",
+            "item_name",
+            "parent_title",
+            "part",
+            "title",
+            "file_title",
+            "content",
+        ],
+        limit=300,
+    )
+
+    case_terms = ["案例", "故障", "维修", "处理", "现象", "原因", "解决", "排查"]
+    query_terms = {term for term in rewritten_query.lower().split() if term.strip()}
+    scored_chunks = []
+
+    for row in result or []:
+        content = str(row.get("content", ""))
+        title = str(row.get("title", ""))
+        parent_title = str(row.get("parent_title", ""))
+        search_text = f"{title} {parent_title} {content}".lower()
+        score = sum(search_text.count(term) for term in query_terms)
+        case_boost = sum(search_text.count(term) for term in case_terms)
+        score += case_boost * 1.5
+        if score <= 0 or case_boost <= 0:
+            continue
+
+        scored_chunks.append(
+            {
+                "chunk_id": row.get("chunk_id"),
+                "item_name": row.get("item_name", ""),
+                "title": row.get("title"),
+                "parent_title": row.get("parent_title"),
+                "part": row.get("part"),
+                "file_title": row.get("file_title"),
+                "content": row.get("content", ""),
+                "score": float(score),
+                "type": "case",
+                "url": None,
+            }
+        )
+
+    scored_chunks.sort(key=lambda item: item.get("score", 0.0), reverse=True)
+    return scored_chunks[:5]
+
+
+@step_log("search_cases")
 def search_cases(state: QueryGraphState) -> QueryGraphState:
-    """
-    案例检索主函数（参考老师 answer_service.py 风格）
-    
-    输入：state（包含 rewritten_query, extracted_entities）
-    输出：state（新增 case_chunks 字段）
-    """
-    # 1. 校验参数
-    rewritten_query = validate_case_state(state)
-    
-    # 2. 提取故障现象
-    entities = state.get("extracted_entities", {})
-    fault_symptom = entities.get("fault_symptom", rewritten_query)
-    
-    # 3. 生成查询向量
-    try:
-        embedding_result = llm_provider.embed_documents([fault_symptom])
-        dense_vector = embedding_result.get("dense")[0]
-        sparse_vector = embedding_result.get("sparse")[0]
-    except Exception as e:
-        logger.error(f"案例检索向量生成失败：{e}")
-        state["case_chunks"] = []
-        return state
-    
-    # 4. 构造 Milvus 搜索请求
-    try:
-        reqs = milvus_gateway.create_requests(
-            dense_vector=dense_vector,
-            sparse_vector=sparse_vector,
-            limit=5,
-        )
-        
-        # 5. 调用 Milvus 混合搜索
-        milvus_result = milvus_gateway.hybrid_search(
-            collection_name=milvus_gateway.COLLECTION_NAME,
-            reqs=reqs,
-            ranker_weights=(0.6, 0.4),
-            norm_score=True,
-            limit=5,
-            output_fields=["chunk_id", "item_name", "title", "content", "part"],
-        )
-        
-        # 6. 格式化结果
-        case_chunks = []
-        if milvus_result and len(milvus_result) > 0:
-            for hit in milvus_result[0]:
-                entity = hit.get("entity", {})
-                case_chunks.append({
-                    "chunk_id": hit.get("id") or entity.get("chunk_id", ""),
-                    "item_name": entity.get("item_name", ""),
-                    "title": entity.get("title", ""),
-                    "content": entity.get("content", ""),
-                    "part": entity.get("part", ""),
-                    "score": hit.get("distance", 0.0),
-                    "type": "case",
-                })
-        
-        state["case_chunks"] = case_chunks
-        logger.info(f"案例检索完成：{fault_symptom} → {len(case_chunks)} 条结果")
-        
-    except Exception as e:
-        logger.error(f"案例检索失败：{e}")
-        state["case_chunks"] = []
-    
+    logger.info("[case_search] 案例检索开始")
+    item_names, rewritten_query = validate_case_search_state(state)
+    state["case_chunks"] = search_case_chunks(item_names, rewritten_query)
+    logger.info(f"[case_search] 案例检索完成，召回 {len(state['case_chunks'])} 条")
     return state

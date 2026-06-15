@@ -1,0 +1,39 @@
+{
+  "metadata": {
+    "title": "新能源商用车常见故障码大全",
+    "version": "1.0",
+    "data_source": "基于比亚迪商用车、东风商用车、一汽解放等主流品牌OBD故障码整理",
+    "last_updated": "2026-06-13"
+  },
+  "fault_codes": [
+    {"code": "P0101", "system": "发动机", "description": "空气流量计电路范围/性能", "symptom": "动力不足、油耗增加", "cause": "空气流量计传感器积碳或损坏", "solution": "清洁或更换空气流量计"},
+    {"code": "P0102", "system": "发动机", "description": "空气流量计电路低输入", "symptom": "怠速不稳、加速无力", "cause": "传感器线路断路或短路", "solution": "检查线路连接"},
+    {"code": "P0103", "system": "发动机", "description": "空气流量计电路高输入", "symptom": "油耗增加、排放超标", "cause": "传感器信号异常", "solution": "更换空气流量计"},
+    {"code": "P0112", "system": "发动机", "description": "进气温度传感器电路低输入", "symptom": "冷启动困难", "cause": "传感器损坏或线路短路", "solution": "更换传感器"},
+    {"code": "P0113", "system": "发动机", "description": "进气温度传感器电路高输入", "symptom": "热启动困难", "cause": "传感器断路", "solution": "检查线路"},
+    {"code": "P0117", "system": "发动机", "description": "冷却液温度传感器电路低输入", "symptom": "水温表异常", "cause": "传感器损坏", "solution": "更换传感器"},
+    {"code": "P0118", "system": "发动机", "description": "冷却液温度传感器电路高输入", "symptom": "风扇常转", "cause": "传感器断路", "solution": "检查线路"},
+    {"code": "P0128", "system": "发动机", "description": "冷却液温度低于节温器调节温度", "symptom": "暖风不热、油耗增加", "cause": "节温器常开", "solution": "更换节温器"},
+    {"code": "P0130", "system": "排放", "description": "氧传感器电路故障（气缸列1传感器1）", "symptom": "油耗增加、排放超标", "cause": "氧传感器损坏", "solution": "更换氧传感器"},
+    {"code": "P0171", "system": "发动机", "description": "系统过稀（气缸列1）", "symptom": "怠速不稳、动力不足", "cause": "进气系统漏气或喷油器堵塞", "solution": "检查进气系统和喷油器"},
+    {"code": "P0201", "system": "发动机", "description": "喷油器电路故障（气缸1）", "symptom": "发动机抖动、缺缸", "cause": "喷油器损坏或线路故障", "solution": "检查喷油器和线路"},
+    {"code": "P0234", "system": "发动机", "description": "涡轮增压器过增压", "symptom": "动力下降、异响", "cause": "废气旁通阀卡滞", "solution": "清洁或更换涡轮增压器"},
+    {"code": "P0300", "system": "发动机", "description": "随机/多缸失火", "symptom": "发动机抖动、动力不足", "cause": "点火系统或燃油系统故障", "solution": "检查火花塞、点火线圈、喷油器"},
+    {"code": "P0301", "system": "发动机", "description": "气缸1失火", "symptom": "发动机抖动", "cause": "火花塞或点火线圈故障", "solution": "更换火花塞或点火线圈"},
+    {"code": "P0401", "system": "排放", "description": "废气再循环流量不足", "symptom": "排放超标", "cause": "EGR阀堵塞", "solution": "清洁或更换EGR阀"},
+    {"code": "P0420", "system": "排放", "description": "催化转化器效率低于阈值", "symptom": "排放超标、油耗增加", "cause": "三元催化器失效", "solution": "更换三元催化器"},
+    {"code": "P0442", "system": "排放", "description": "蒸发排放系统泄漏（小泄漏）", "symptom": "燃油味、故障灯亮", "cause": "碳罐电磁阀关闭不严", "solution": "更换碳罐电磁阀"},
+    {"code": "P0500", "system": "车速", "description": "车速传感器故障", "symptom": "车速表不工作", "cause": "传感器损坏", "solution": "更换车速传感器"},
+    {"code": "P0562", "system": "电气", "description": "系统电压低", "symptom": "启动困难、电器工作异常", "cause": "蓄电池老化或发电机故障", "solution": "检查蓄电池和发电机"},
+    {"code": "P0563", "system": "电气", "description": "系统电压高", "symptom": "电器损坏风险", "cause": "发电机调节器故障", "solution": "检查发电机"},
+    {"code": "P0606", "system": "ECU", "description": "ECU内部故障", "symptom": "多个系统故障", "cause": "ECU损坏", "solution": "更换ECU"},
+    {"code": "P0700", "system": "变速箱", "description": "变速箱控制系统故障", "symptom": "换挡顿挫、故障灯亮", "cause": "变速箱控制模块故障", "solution": "检查变速箱控制模块"},
+    {"code": "P0705", "system": "变速箱", "description": "变速箱档位传感器故障", "symptom": "档位显示异常", "cause": "传感器损坏", "solution": "更换档位传感器"},
+    {"code": "C0035", "system": "制动", "description": "左前轮速传感器故障", "symptom": "ABS故障灯亮", "cause": "传感器损坏或脏污", "solution": "清洁或更换传感器"},
+    {"code": "C0036", "system": "制动", "description": "右前轮速传感器故障", "symptom": "ABS故障灯亮", "cause": "传感器损坏或脏污", "solution": "清洁或更换传感器"},
+    {"code": "C0040", "system": "制动", "description": "左后轮速传感器故障", "symptom": "ABS故障灯亮", "cause": "传感器损坏或脏污", "solution": "清洁或更换传感器"},
+    {"code": "C0041", "system": "制动", "description": "右后轮速传感器故障", "symptom": "ABS故障灯亮", "cause": "传感器损坏或脏污", "solution": "清洁或更换传感器"},
+    {"code": "U0100", "system": "通信", "description": "与ECU失去通信", "symptom": "多个系统故障", "cause": "CAN总线故障或ECU损坏", "solution": "检查CAN总线和ECU"},
+    {"code": "U0121", "system": "通信", "description": "与ABS控制模块失去通信", "symptom": "ABS故障灯亮", "cause": "ABS模块或线路故障", "solution": "检查ABS模块和线路"}
+  ]
+}

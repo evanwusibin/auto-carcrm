@@ -1,76 +1,114 @@
-import asyncio
 import json
+import os
 from typing import Any
 
-from agents.mcp import MCPServerStreamableHttp
+import requests
 
-from app.infra.config.providers import infra_config
 from app.process.query.agent.state import QueryGraphState
 from app.shared.runtime.logger import logger, step_log
 
+MCP_TIMEOUT = 30
+
+
 @step_log("get_written_query_and_validate")
 def get_written_query_and_validate(state):
-    # 1、获取数据
     rewritten_query = state.get("rewritten_query")
     if not rewritten_query:
-        logger.info(f"rewritten_query: {rewritten_query} 没有内容，请重新弄输入")
-        raise ValueError(f"rewritten_query: {rewritten_query} 没有内容，请重新弄输入")
+        raise ValueError(f"rewritten_query 为空")
     return rewritten_query
 
-async def web_search_doc(rewritten_query):
-    # 初始化mcp_server
-    mcp_server = MCPServerStreamableHttp(
-        name  ="web_search_mcp",
-        params= {
-            "url" :infra_config.mcp.mcp_base_url,
-            "headers" :{"Authorization":f"Bearer {infra_config.mcp.api_key}"},
 
-            "timeout":300
-        },
-        cache_tools_list=True,
-        max_retry_attempts=3,
-    )
+def _is_mcp_configured() -> bool:
+    from app.infra.config.providers import infra_config
+    url = infra_config.mcp.mcp_base_url
+    key = infra_config.mcp.api_key
+    return bool(url and key)
+
+
+def _mcp_search_sync(rewritten_query: str) -> list[dict]:
+    from app.infra.config.providers import infra_config
+
+    base_url = infra_config.mcp.mcp_base_url
+    api_key = infra_config.mcp.api_key
+
+    session = requests.Session()
+    session.trust_env = False
+    session.proxies = {"http": None, "https": None}
+    session.headers.update({
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    })
+
     try:
-        # 创建连接
-        
-        await mcp_server.connect()
-        # 调用网络工具
-        tool_list = await mcp_server.list_tools()
-        logger.info(f"本次连接服务对应的tool_list: {tool_list}")
-        mcp_result = await mcp_server.call_tool(tool_name="bailian_web_search",arguments={"query":rewritten_query,"count":5})
-        return mcp_result
+        init_body = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": {"name": "auto-carcrm", "version": "1.0"}
+            }
+        }
+        resp = session.post(base_url, json=init_body, timeout=10)
+        if resp.status_code != 200:
+            logger.warning(f"[web_search] MCP 初始化失败: HTTP {resp.status_code}")
+            return []
+
+        session_id = resp.headers.get("mcp-session-id")
+
+        headers = {}
+        if session_id:
+            headers["mcp-session-id"] = session_id
+
+        call_body = {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/call",
+            "params": {
+                "name": "bailian_web_search",
+                "arguments": {"query": rewritten_query, "count": 5}
+            }
+        }
+        resp = session.post(base_url, json=call_body, headers=headers, timeout=MCP_TIMEOUT)
+        if resp.status_code != 200:
+            logger.warning(f"[web_search] MCP 调用失败: HTTP {resp.status_code}")
+            return []
+
+        result = resp.json()
+        if "error" in result:
+            logger.warning(f"[web_search] MCP 业务错误: {result['error']}")
+            return []
+
+        content = result.get("result", {}).get("content", [])
+        if content:
+            search_text = content[0].get("text", "")
+            if search_text:
+                return json.loads(search_text).get("pages", [])
+        return []
+
+    except requests.Timeout:
+        logger.warning(f"[web_search] MCP 调用超时（{MCP_TIMEOUT}s），跳过联网搜索")
+        return []
     except Exception as e:
-        logger.exception(f"调用工具出现问题{rewritten_query},错误原因{str(e)}")
-        # 断开连接
+        logger.warning(f"[web_search] MCP 调用失败，跳过联网搜索: {e}")
+        return []
     finally:
-        await mcp_server.cleanup()
+        session.close()
+
 
 @step_log("search_by_web")
 def search_by_web(state: QueryGraphState) -> list[Any] | Any:
-    """
-    网络搜索服务：
-    1. 通过 MCP 协议异步调用百炼联网搜索接口
-    2. 将用户的查询转化为实时的、结构化的网络搜索结果
-    3. 包含标题、链接和摘要
-    4. 回写 web_search_docs
-    """
-    # 1、获取和校验参数
+    logger.info("[web_search] ===== search_by_web 开始 =====")
     rewritten_query = get_written_query_and_validate(state)
 
-    # 调用业务的网络工具
-    mcp_result = asyncio.run(web_search_doc(rewritten_query))
-    logger.info(f"mcp_result: {mcp_result}")
-    # 获取结果
-    if mcp_result and mcp_result.content:
-        search_text = mcp_result.content[0].text
-    else:
-        search_text = ""
-    logger.info(f"search_text: {search_text}")
-    # 转成dict pages对应列表即可
-    if search_text:
-        web_search_doc_list = json.loads(search_text).get("pages", [])
-    else:
-        web_search_doc_list = []
-    logger.info(f"{rewritten_query}这个问题对应联网的结果web_search_doc_list: {web_search_doc_list}")
-    return web_search_doc_list
+    if not _is_mcp_configured():
+        logger.info("[web_search] MCP 未配置完整，跳过联网搜索")
+        state["web_search_docs"] = []
+        return state
 
+    logger.info("[web_search] MCP 已配置，开始调用（trust_env=False）...")
+    web_search_doc_list = _mcp_search_sync(rewritten_query)
+    logger.info(f"{rewritten_query} 联网结果: {len(web_search_doc_list)} 条")
+    state["web_search_docs"] = web_search_doc_list
+    return state

@@ -1,5 +1,4 @@
-from matplotlib.pyplot import title
-from pymilvus import DataType, milvus_client
+from pymilvus import DataType
 
 from app.infra.vectorstore.milvus_gateway import milvus_gateway
 from app.process.import_.agent.state import ImportGraphState
@@ -62,7 +61,7 @@ def prepare_chunks_collection():
         schema = schema,
         index_params = index_params
 )
-    logger.info(f"{milvus_client.collection_name} collection created完成吹刷")
+    logger.info(f"{collection_name} collection created")
 
 
 @step_log("remove_old_chunks")

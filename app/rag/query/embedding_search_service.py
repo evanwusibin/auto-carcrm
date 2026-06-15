@@ -47,7 +47,7 @@ def search_chunks(rewritten_query,item_names):
             "content"
         ],
     )
-    # 结果需要遍历return才行对吧
+    # 结果需要遍历return才行对吧  直接取值搜索出来就是字典结果
     return milvus_result[0] if milvus_result and len(milvus_result)>0 else None
 
 

@@ -8,527 +8,536 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --primary:#1a56db;--primary-dark:#1341b0;--primary-light:#e8effd;
-  --accent:#0ea5e9;
   --text-main:#1e293b;--text-sub:#64748b;--text-light:#94a3b8;
   --border:#e2e8f0;--bg-main:#f1f5f9;--bg-white:#ffffff;
-  --radius:10px;--radius-lg:14px;
-  --shadow:0 8px 32px rgba(26,86,219,.12);
-  --shadow-lg:0 20px 60px rgba(26,86,219,.18);
 }
 html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei','Segoe UI',sans-serif;font-size:14px;color:var(--text-main);}
-
-/* ── 整体布局 ── */
 .page{display:flex;height:100vh;overflow:hidden;}
 
-/* ── 左侧轮播区 ── */
-.carousel-pane{
-  flex:1;position:relative;overflow:hidden;
-  background:#0f172a;
-}
+/* ── 左侧轮播 ── */
+.carousel-pane{flex:1;position:relative;overflow:hidden;background:#0f172a;}
 
-/* 轮播 */
-.slides{width:100%;height:100%;position:relative;}
-.slide{
-  position:absolute;inset:0;opacity:0;
-  transition:opacity 1.2s cubic-bezier(.4,0,.2,1);
-  background-size:cover;background-position:center;
-}
-.slide.active{opacity:1;}
-.slide::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(
-    135deg,
-    rgba(10,20,60,.55) 0%,
-    rgba(26,86,219,.25) 50%,
-    rgba(10,20,40,.60) 100%
-  );
-}
+/* 左上角品牌 */
+.carousel-brand{position:absolute;top:28px;left:32px;z-index:5;display:flex;align-items:center;gap:10px;}
+.carousel-brand-icon{width:34px;height:34px;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;}
+.carousel-brand-icon svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;}
+.carousel-brand-name{font-size:15px;font-weight:600;color:#fff;letter-spacing:.5px;}
+.carousel-brand-sub{font-size:11px;color:rgba(255,255,255,.65);margin-top:1px;}
 
-/* 轮播文案 */
-.slide-caption{
-  position:absolute;bottom:0;left:0;right:0;z-index:2;
-  padding:56px 52px 52px;
-  background:linear-gradient(0deg,rgba(10,18,50,.82) 0%,transparent 100%);
+/* 轮播层 */
+.slides{display:flex;width:100%;height:100%;transition:transform 1s cubic-bezier(.25,.46,.45,.94);}
+.slide{flex:0 0 100%;height:100%;position:relative;background-size:cover;background-position:center;}
+.slide::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(10,20,60,.30) 0%,rgba(26,86,219,.08) 50%,rgba(10,20,40,.35) 100%);}
+.slide video{position:relative;z-index:1;}
+
+/* 文案层 */
+.caption-wrap{
+  position:absolute;top:50%;left:48px;right:80px;z-index:1;
+  transform:translateY(-50%) translateX(80px);
+  opacity:0;
+  transition:opacity .8s ease .35s, transform .8s ease .35s;
 }
-.slide-tag{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:5px 14px;border-radius:20px;
-  background:rgba(255,255,255,.15);backdrop-filter:blur(8px);
-  border:1px solid rgba(255,255,255,.25);
-  color:#e0eaff;font-size:12px;font-weight:500;margin-bottom:16px;
+.slide.active .caption-wrap{
+  transform:translateY(-50%) translateX(0);
+  opacity:1;
 }
-.slide-tag::before{content:'';width:6px;height:6px;border-radius:50%;background:#60a5fa;box-shadow:0 0 8px #60a5fa;}
-.slide-title{
-  font-size:30px;font-weight:700;color:#fff;
-  line-height:1.3;letter-spacing:-.5px;margin-bottom:10px;
-  text-shadow:0 2px 12px rgba(0,0,0,.3);
-}
-.slide-desc{
-  font-size:14px;color:rgba(220,235,255,.8);
-  line-height:1.7;max-width:420px;
-}
+.slide-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;background:rgba(255,255,255,.12);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);color:#e0eaff;font-size:14px;font-weight:500;margin-bottom:18px;}
+.slide-tag::before{content:'';width:7px;height:7px;border-radius:50%;background:#60a5fa;box-shadow:0 0 6px #60a5fa;}
+.slide-title{font-size:44px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.5px;margin-bottom:14px;text-shadow:0 2px 12px rgba(0,0,0,.4);}
+.slide-desc{font-size:17px;color:rgba(220,235,255,.88);line-height:1.7;max-width:500px;text-shadow:0 1px 6px rgba(0,0,0,.3);}
 
 /* 轮播指示器 */
-.carousel-dots{
-  position:absolute;bottom:28px;left:52px;z-index:3;
-  display:flex;gap:8px;align-items:center;
-}
-.dot{
-  width:24px;height:4px;border-radius:2px;
-  background:rgba(255,255,255,.35);
-  cursor:pointer;transition:all .4s;
-}
+.carousel-dots{position:absolute;bottom:24px;left:48px;z-index:3;display:flex;gap:8px;align-items:center;}
+.dot{width:24px;height:4px;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s;}
 .dot.active{width:40px;background:#fff;}
 
-/* 轮播箭头 */
-.carousel-btn{
-  position:absolute;top:50%;transform:translateY(-50%);z-index:3;
-  width:40px;height:40px;border-radius:50%;
-  background:rgba(255,255,255,.18);backdrop-filter:blur(8px);
-  border:1px solid rgba(255,255,255,.3);
-  color:#fff;cursor:pointer;font-size:18px;
-  display:flex;align-items:center;justify-content:center;
-  transition:background .2s;opacity:0;
-}
-.carousel-pane:hover .carousel-btn{opacity:1;}
-.carousel-btn:hover{background:rgba(255,255,255,.3);}
-.carousel-btn.prev{left:20px;}
-.carousel-btn.next{right:20px;}
+/* ── 右侧登录/注册 ── */
+.login-pane{width:420px;flex-shrink:0;background:#fff;display:flex;flex-direction:column;justify-content:center;padding:40px 44px;position:relative;overflow-y:auto;}
+.login-pane::before{content:'';position:absolute;top:0;left:0;bottom:0;width:1px;background:linear-gradient(180deg,transparent,var(--border) 20%,var(--border) 80%,transparent);}
 
-/* 品牌水印 */
-.brand-watermark{
-  position:absolute;top:28px;left:40px;z-index:3;
-  display:flex;align-items:center;gap:10px;
-}
-.brand-logo-box{
-  width:34px;height:34px;border-radius:8px;
-  background:rgba(255,255,255,.18);backdrop-filter:blur(10px);
-  border:1px solid rgba(255,255,255,.3);
-  display:flex;align-items:center;justify-content:center;
-}
-.brand-logo-box svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;}
-.brand-name{font-size:15px;font-weight:600;color:#fff;letter-spacing:.5px;}
+.auth-title{font-size:22px;font-weight:700;color:var(--text-main);margin-bottom:4px;}
+.auth-subtitle{font-size:13px;color:var(--text-sub);line-height:1.6;margin-bottom:22px;}
 
-/* ── 右侧登录卡 ── */
-.login-pane{
-  width:460px;flex-shrink:0;
-  background:#fff;
-  display:flex;flex-direction:column;justify-content:center;
-  padding:48px 52px;
-  position:relative;overflow-y:auto;
-}
-.login-pane::before{
-  content:'';position:absolute;top:0;left:0;bottom:0;width:1px;
-  background:linear-gradient(180deg,transparent,var(--border) 20%,var(--border) 80%,transparent);
-}
-
-/* 登录头部 */
-.login-header{margin-bottom:40px;}
-.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px;}
-.logo-icon{
-  width:42px;height:42px;border-radius:10px;
-  background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 14px rgba(26,86,219,.35);
-}
-.logo-icon svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;}
-.logo-texts .logo-name{font-size:16px;font-weight:700;color:var(--text-main);}
-.logo-texts .logo-sub{font-size:12px;color:var(--text-sub);margin-top:2px;}
-.login-title{font-size:26px;font-weight:700;color:var(--text-main);margin-bottom:8px;}
-.login-subtitle{font-size:14px;color:var(--text-sub);line-height:1.6;}
+/* Tab */
+.tab-row{display:flex;gap:0;margin-bottom:22px;}
+.tab-btn{flex:1;height:40px;background:#fff;border:1.5px solid var(--primary);font-size:14px;font-weight:500;color:var(--text-sub);cursor:pointer;transition:all .15s;font-family:inherit;outline:none;}
+.tab-btn+.tab-btn{border-left:none;}
+.tab-btn.active{background:var(--primary-light);color:var(--primary);font-weight:700;}
+.tab-btn:not(.active):hover{background:var(--primary-light);color:var(--primary);}
 
 /* 表单 */
-.form-group{margin-bottom:18px;}
-.form-label{
-  display:block;font-size:13px;font-weight:500;
-  color:var(--text-sub);margin-bottom:8px;
-}
-.input-wrap{
-  position:relative;display:flex;align-items:center;
-}
-.input-wrap svg{
-  position:absolute;left:13px;width:16px;height:16px;
-  stroke:var(--text-light);fill:none;stroke-width:1.8;pointer-events:none;
-  transition:stroke .15s;
-}
-.form-input{
-  width:100%;height:46px;
-  padding:0 42px;
-  border:1.5px solid var(--border);border-radius:var(--radius);
-  font-size:14px;color:var(--text-main);
-  background:var(--bg-main);outline:none;
-  transition:border-color .2s,box-shadow .2s,background .2s;
-  font-family:inherit;
-}
-.form-input:focus{
-  border-color:var(--primary);background:#fff;
-  box-shadow:0 0 0 3px rgba(26,86,219,.1);
-}
-.form-input:focus ~ svg,.input-wrap:focus-within svg{stroke:var(--primary);}
-.input-wrap svg:last-child{left:auto;right:13px;cursor:pointer;}
+.form-panel{display:none;}
+.form-panel.active{display:block;}
+.form-group{margin-bottom:14px;}
+.form-label{display:block;font-size:12.5px;font-weight:500;color:var(--text-sub);margin-bottom:6px;}
+.input-wrap{position:relative;display:flex;align-items:center;}
+.input-wrap svg{position:absolute;left:12px;width:15px;height:15px;stroke:var(--text-light);fill:none;stroke-width:1.8;pointer-events:none;transition:stroke .15s;}
+.form-input{width:100%;height:42px;padding:0 38px;border:1.5px solid var(--border);font-size:13.5px;color:var(--text-main);background:var(--bg-main);outline:none;transition:border-color .2s,box-shadow .2s,background .2s;font-family:inherit;}
+.form-input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(26,86,219,.08);}
+.form-input:focus~svg,.input-wrap:focus-within svg{stroke:var(--primary);}
+.input-wrap svg:last-child{left:auto;right:12px;cursor:pointer;pointer-events:auto;}
 .form-input::placeholder{color:var(--text-light);}
 
-/* 记住我 & 忘记密码 */
-.form-extras{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:24px;
-}
-.remember{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
-.remember input[type=checkbox]{
-  width:16px;height:16px;border-radius:4px;
-  accent-color:var(--primary);cursor:pointer;
-}
-.remember span{font-size:13px;color:var(--text-sub);}
-.forgot-link{
-  font-size:13px;color:var(--primary);text-decoration:none;
-  font-weight:500;transition:color .15s;
-}
+.form-extras{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.remember{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
+.remember input[type=checkbox]{width:15px;height:15px;accent-color:var(--primary);cursor:pointer;}
+.remember span{font-size:12.5px;color:var(--text-sub);}
+.forgot-link{font-size:12.5px;color:var(--primary);text-decoration:none;font-weight:500;transition:color .15s;}
 .forgot-link:hover{color:var(--primary-dark);text-decoration:underline;}
 
-/* 登录按钮 */
-.btn-login{
-  width:100%;height:48px;
-  background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
-  color:#fff;border:none;border-radius:var(--radius);
-  font-size:15px;font-weight:600;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:all .25s;font-family:inherit;
-  box-shadow:0 4px 16px rgba(26,86,219,.35);
-  position:relative;overflow:hidden;
-}
-.btn-login::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(255,255,255,.12),transparent);
-  opacity:0;transition:opacity .2s;
-}
-.btn-login:hover{
-  transform:translateY(-1px);
-  box-shadow:0 8px 24px rgba(26,86,219,.45);
-}
-.btn-login:hover::after{opacity:1;}
-.btn-login:active{transform:translateY(0);}
-.btn-login svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;}
-.btn-login .spin{
-  width:18px;height:18px;border:2px solid rgba(255,255,255,.5);
-  border-top-color:#fff;border-radius:50%;
-  animation:spin .7s linear infinite;display:none;
-}
+.btn-primary{width:100%;height:44px;background:var(--primary-light);color:var(--primary);border:1.5px solid var(--primary);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;font-family:inherit;position:relative;overflow:hidden;}
+.btn-primary:hover{background:#dbeafe;border-color:var(--primary-dark);color:var(--primary-dark);box-shadow:0 2px 8px rgba(26,86,219,.12);}
+.btn-primary:active{background:#bfdbfe;}
+.btn-primary svg{width:16px;height:16px;stroke:var(--primary);fill:none;stroke-width:2;}
+.btn-primary .spin{width:16px;height:16px;border:2px solid rgba(26,86,219,.3);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;display:none;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* 分割线 */
-.divider{
-  display:flex;align-items:center;gap:12px;margin:24px 0;
-}
-.divider::before,.divider::after{
-  content:'';flex:1;height:1px;background:var(--border);
-}
+.divider{display:flex;align-items:center;gap:10px;margin:20px 0;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
 .divider span{font-size:12px;color:var(--text-light);white-space:nowrap;}
 
-/* 快速登录 */
 .quick-login{display:flex;gap:10px;}
-.quick-btn{
-  flex:1;height:40px;border-radius:8px;
-  border:1.5px solid var(--border);background:#fff;
-  display:flex;align-items:center;justify-content:center;gap:7px;
-  font-size:12.5px;color:var(--text-sub);cursor:pointer;
-  transition:all .2s;font-family:inherit;
-}
+.quick-btn{flex:1;height:40px;border:1.5px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;gap:7px;font-size:12.5px;color:var(--text-sub);cursor:pointer;transition:all .2s;font-family:inherit;}
 .quick-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light);}
+.quick-btn:active{transform:scale(.98);}
 .quick-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;}
 
-/* 底部注册提示 */
-.login-footer{
-  margin-top:28px;text-align:center;
-  font-size:13px;color:var(--text-sub);
-}
-.login-footer a{color:var(--primary);font-weight:500;text-decoration:none;}
-.login-footer a:hover{text-decoration:underline;}
-
-/* 错误提示 */
-.err-msg{
-  font-size:12px;color:#dc2626;margin-top:6px;
-  display:none;align-items:center;gap:4px;
-}
+.err-msg{font-size:11.5px;color:#dc2626;margin-top:5px;display:none;align-items:center;gap:4px;}
 .err-msg svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
 .err-msg.show{display:flex;}
 .form-input.error{border-color:#dc2626;background:#fff5f5;}
 
-/* Toast */
 .toast-wrap{position:fixed;top:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px;}
-.toast{
-  padding:11px 18px;border-radius:8px;font-size:13px;font-weight:500;
-  box-shadow:0 4px 20px rgba(0,0,0,.15);opacity:0;transform:translateX(20px);
-  transition:all .25s;display:flex;align-items:center;gap:8px;color:#fff;
-}
+.toast{padding:11px 18px;font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.15);opacity:0;transform:translateX(20px);transition:all .25s;display:flex;align-items:center;gap:8px;color:#fff;}
 .toast.show{opacity:1;transform:translateX(0);}
 .toast.success{background:#15803d;}
 .toast.error{background:#dc2626;}
 .toast.info{background:var(--primary);}
 .toast svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;flex-shrink:0;}
 
-/* 响应式 */
-@media(max-width:900px){
-  .carousel-pane{display:none;}
-  .login-pane{width:100%;padding:40px 28px;}
-}
-@media(max-width:480px){
-  .login-pane{padding:32px 20px;}
-  .quick-login{flex-direction:column;}
-}
+@media(max-width:900px){.carousel-pane{display:none;}.login-pane{width:100%;padding:40px 28px;}}
+@media(max-width:480px){.login-pane{padding:32px 20px;}.quick-login{flex-direction:column;}}
 </style>
 </head>
 <body>
 
 <div class="page">
 
-  <!-- ── 左侧 BYD 图片轮播 ── -->
+  <!-- ── 左侧轮播 ── -->
   <div class="carousel-pane" id="carouselPane">
-
-    <!-- 品牌标识 -->
-    <div class="brand-watermark">
-      <div class="brand-logo-box">
+    <div class="carousel-brand">
+      <div class="carousel-brand-icon">
         <svg viewBox="0 0 24 24"><path d="M3 12l7-7 7 7M5 10v7a1 1 0 001 1h4v-4h4v4h4a1 1 0 001-1v-7"/></svg>
       </div>
-      <span class="brand-name">售后知识管理平台</span>
+      <div>
+        <div class="carousel-brand-name">汽车售后知识管理平台</div>
+        <div class="carousel-brand-sub">AutoCARCRM</div>
+      </div>
     </div>
 
-    <!-- 轮播图组 -->
     <div class="slides" id="slides">
-      <div class="slide active" style="background-image:url('images/car1_bg.jpg')"></div>
-      <div class="slide" style="background-image:url('images/car2_bg.jpg')"></div>
-      <div class="slide" style="background-image:url('images/car3_bg.jpg')"></div>
-      <div class="slide" style="background-image:url('images/car4_bg.jpg')"></div>
-      <div class="slide" style="background-image:url('images/car5_bg.jpg')"></div>
+      <!-- 1.mp4 视频 -->
+      <div class="slide active" id="videoSlide">
+        <video id="brandVideo" muted playsinline style="width:100%;height:100%;object-fit:cover;">
+          <source src="/images/1.mp4" type="video/mp4">
+        </video>
+        <div class="caption-wrap"><div class="slide-tag">品牌宣传</div><div class="slide-title">新能源商用车</div><div class="slide-desc">新能源商用车领导品牌，引领绿色物流新时代</div></div>
+      </div>
+      <!-- 2.webp -->
+      <div class="slide" style="background-image:url('/images/2.webp')">
+        <div class="caption-wrap"><div class="slide-tag">新能源商用车</div><div class="slide-title">7+4 全市场电动化战略</div><div class="slide-desc">覆盖公交、物流、建筑、环卫、仓储、港口等十大细分市场，引领汽车AI智能化绿色转型。</div></div>
+      </div>
+      <!-- 3.png -->
+      <div class="slide" style="background-image:url('/images/3.png')">
+        <div class="caption-wrap"><div class="slide-tag">纯电轻卡</div><div class="slide-title">T5 纯电物流车</div><div class="slide-desc">城市配送首选，高效续航、智能网联，助力绿色城配最后一公里。</div></div>
+      </div>
+      <!-- 4.png -->
+      <div class="slide" style="background-image:url('/images/4.png')">
+        <div class="caption-wrap"><div class="slide-tag">桥梁运输</div><div class="slide-title">全场景物流覆盖</div><div class="slide-desc">纯电重卡驰骋大桥，覆盖港口、矿区、干线物流等全场景运输需求。</div></div>
+      </div>
+      <!-- 5.png -->
+      <div class="slide" style="background-image:url('/images/5.png')">
+        <div class="caption-wrap"><div class="slide-tag">城市出行</div><div class="slide-title">智慧公交 城市先行</div><div class="slide-desc">纯电公交覆盖全国100+城市，累计运营里程超百亿公里。</div></div>
+      </div>
+      <!-- 6.png -->
+      <div class="slide" style="background-image:url('/images/6.png')">
+        <div class="caption-wrap"><div class="slide-tag">干线物流</div><div class="slide-title">高效可靠 降本增效</div><div class="slide-desc">纯电重卡车队规模化运营，降低全生命周期成本，引领零碳干线运输。</div></div>
+      </div>
+      <!-- 7.png -->
+      <div class="slide" style="background-image:url('/images/7.png')">
+        <div class="caption-wrap"><div class="slide-tag">绿色城市</div><div class="slide-title">低碳未来 智慧交通</div><div class="slide-desc">以新能源技术驱动城市绿色转型，构建零排放智慧交通生态体系。</div></div>
+      </div>
+      <!-- 8.png -->
+      <div class="slide" style="background-image:url('/images/8.png')">
+        <div class="caption-wrap"><div class="slide-tag">港口物流</div><div class="slide-title">智慧货运 港口先行</div><div class="slide-desc">纯电牵引车与港口专用车，助力港口绿色升级，实现高效零碳物流运输。</div></div>
+      </div>
     </div>
 
-    <!-- 文案层 -->
-    <div class="slide-caption">
-      <div class="slide-tag" id="slideTag">BYD 新能源商用车</div>
-      <div class="slide-title" id="slideTitle">7+4 全市场电动化战略</div>
-      <div class="slide-desc" id="slideDesc">覆盖公交、物流、建筑、环卫、仓储、港口等十大细分市场，引领商用车绿色转型。</div>
-    </div>
-
-    <!-- 指示器 -->
     <div class="carousel-dots" id="dotsWrap">
-      <div class="dot active" onclick="goSlide(0)"></div>
-      <div class="dot" onclick="goSlide(1)"></div>
-      <div class="dot" onclick="goSlide(2)"></div>
-      <div class="dot" onclick="goSlide(3)"></div>
-      <div class="dot" onclick="goSlide(4)"></div>
+      <div class="dot active" data-idx="0"></div>
+      <div class="dot" data-idx="1"></div>
+      <div class="dot" data-idx="2"></div>
+      <div class="dot" data-idx="3"></div>
+      <div class="dot" data-idx="4"></div>
+      <div class="dot" data-idx="5"></div>
+      <div class="dot" data-idx="6"></div>
+      <div class="dot" data-idx="7"></div>
     </div>
-
-    <!-- 箭头 -->
-    <button class="carousel-btn prev" onclick="prevSlide()">&#8249;</button>
-    <button class="carousel-btn next" onclick="nextSlide()">&#8250;</button>
   </div>
 
-  <!-- ── 右侧登录区 ── -->
+  <!-- ── 右侧登录/注册 ── -->
   <div class="login-pane">
 
-    <div class="login-header">
-      <!-- Logo -->
-      <div class="login-logo">
-        <div class="logo-icon">
-          <svg viewBox="0 0 24 24"><path d="M3 12l7-7 7 7M5 10v7a1 1 0 001 1h4v-4h4v4h4a1 1 0 001-1v-7"/></svg>
-        </div>
-        <div class="logo-texts">
-          <div class="logo-name">汽车售后知识管理平台</div>
-          <div class="logo-sub">AutoCARCRM · Knowledge Hub</div>
-        </div>
-      </div>
+    <div class="auth-title" id="authTitle">账号登录</div>
+    <div class="auth-subtitle" id="authSubtitle">请使用您的账号登录系统</div>
 
-      <div class="login-title">欢迎回来 👋</div>
-      <div class="login-subtitle">请使用您的账号登录，开始智能售后知识检索</div>
+    <div class="tab-row">
+      <button type="button" class="tab-btn active" id="tabLogin">登录</button>
+      <button type="button" class="tab-btn" id="tabRegister">注册</button>
     </div>
 
-    <!-- 登录表单 -->
-    <form id="loginForm" onsubmit="handleLogin(event)">
-
-      <div class="form-group">
-        <label class="form-label">账号</label>
-        <div class="input-wrap">
-          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <input type="text" class="form-input" id="username" placeholder="请输入用户名 / 手机号" autocomplete="username">
+    <!-- ── 登录表单 ── -->
+    <div class="form-panel active" id="loginPanel">
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">账号</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" class="form-input" id="loginUsername" placeholder="用户名 / 手机号" autocomplete="username">
+          </div>
+          <div class="err-msg" id="loginUsernameErr"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>请输入账号</div>
         </div>
-        <div class="err-msg" id="usernameErr">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          请输入账号
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
+            <svg viewBox="0 0 24 24" class="eye-toggle" data-input="loginPassword"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div class="err-msg" id="loginPasswordErr"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>请输入密码</div>
         </div>
+        <div class="form-extras">
+          <label class="remember"><input type="checkbox" id="rememberMe" checked><span>记住我</span></label>
+          <a href="#" class="forgot-link">忘记密码?</a>
+        </div>
+        <button type="submit" class="btn-primary" id="loginBtn">
+          <svg viewBox="0 0 24 24" id="loginBtnIcon"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+          <div class="spin" id="loginSpin"></div>
+          <span id="loginBtnText">登 录</span>
+        </button>
+      </form>
+      <div class="divider"><span>或使用其他方式</span></div>
+      <div class="quick-login">
+        <button type="button" class="quick-btn" id="quickSSO"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>企业 SSO 登录</button>
+        <button type="button" class="quick-btn" id="quickLDAP"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>LDAP 目录登录</button>
       </div>
-
-      <div class="form-group">
-        <label class="form-label">密码</label>
-        <div class="input-wrap">
-          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-          <input type="password" class="form-input" id="password" placeholder="请输入密码" autocomplete="current-password" id="pwdInput">
-          <svg viewBox="0 0 24 24" id="eyeIcon" onclick="togglePwd()" style="cursor:pointer">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-          </svg>
-        </div>
-        <div class="err-msg" id="passwordErr">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          请输入密码
-        </div>
-      </div>
-
-      <div class="form-extras">
-        <label class="remember">
-          <input type="checkbox" id="rememberMe" checked>
-          <span>记住我</span>
-        </label>
-        <a href="#" class="forgot-link">忘记密码？</a>
-      </div>
-
-      <button type="submit" class="btn-login" id="loginBtn">
-        <svg viewBox="0 0 24 24" id="loginBtnIcon"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
-        <div class="spin" id="loginSpin"></div>
-        <span id="loginBtnText">登 录</span>
-      </button>
-    </form>
-
-    <div class="divider"><span>或使用其他方式</span></div>
-
-    <div class="quick-login">
-      <button class="quick-btn" onclick="quickLogin('SSO')">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        企业 SSO 登录
-      </button>
-      <button class="quick-btn" onclick="quickLogin('LDAP')">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        LDAP 目录登录
-      </button>
     </div>
 
-    <div class="login-footer">
-      还没有账号？<a href="#">联系管理员开通</a>
+    <!-- ── 注册表单 ── -->
+    <div class="form-panel" id="registerPanel">
+      <form id="registerForm">
+        <div class="form-group">
+          <label class="form-label">用户名</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" class="form-input" id="regUsername" placeholder="请输入用户名" autocomplete="username">
+          </div>
+          <div class="err-msg" id="regUsernameErr"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>请输入用户名</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">手机号</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <input type="tel" class="form-input" id="regPhone" placeholder="请输入手机号" maxlength="11" autocomplete="tel">
+          </div>
+          <div class="err-msg" id="regPhoneErr"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>请输入有效手机号</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            <input type="password" class="form-input" id="regPassword" placeholder="请设置密码（至少6位）" autocomplete="new-password">
+            <svg viewBox="0 0 24 24" class="eye-toggle" data-input="regPassword"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div class="err-msg" id="regPasswordErr"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>密码至少6位</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">确认密码</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <input type="password" class="form-input" id="regPassword2" placeholder="请再次输入密码" autocomplete="new-password">
+          </div>
+          <div class="err-msg" id="regPassword2Err"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>两次密码不一致</div>
+        </div>
+        <button type="submit" class="btn-primary" id="regBtn">
+          <svg viewBox="0 0 24 24" id="regBtnIcon"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          <div class="spin" id="regSpin"></div>
+          <span id="regBtnText">注 册</span>
+        </button>
+      </form>
     </div>
+
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
-/* ── 轮播数据 ── */
-const SLIDES = [
-  { tag:'BYD 新能源商用车', title:'7+4 全市场电动化战略', desc:'覆盖公交、物流、建筑、环卫、仓储、港口等十大细分市场，引领商用车绿色转型。' },
-  { tag:'BYD 纯电重卡', title:'零排放 · 高效运输解决方案', desc:'搭载磷酸铁锂刀片电池，大载重场景续航超500km，助力物流行业绿色升级。' },
-  { tag:'BYD 新能源客车', title:'智慧公共出行 新能源先行', desc:'累计投放超80,000辆纯电公交，全球100+城市绿色出行的首选品牌。' },
-  { tag:'BYD 电动叉车', title:'仓储港口 全面电动化', desc:'额定载重最高5吨，安全节能可靠，为全球仓储及港口物流注入绿色动力。' },
-  { tag:'BYD 矿用车辆', title:'特殊工况 专业电动方案', desc:'专为矿山、港口、机场等特殊场景打造，兼顾高强度作业与零排放目标。' },
-];
+/* ── DOM 就绪后绑定所有事件 ── */
+document.addEventListener('DOMContentLoaded', function () {
 
-let current = 0;
-let timer = null;
+  /* ========== 轮播 ========== */
+  var slideEls = document.querySelectorAll('.slide');
+  var dotEls   = document.querySelectorAll('.dot');
+  var cur = 0, timer = null, videoPlayed = false;
 
-function goSlide(idx) {
-  const slides = document.querySelectorAll('.slide');
-  const dots   = document.querySelectorAll('.dot');
-  slides[current].classList.remove('active');
-  dots[current].classList.remove('active');
-  current = (idx + slides.length) % slides.length;
-  slides[current].classList.add('active');
-  dots[current].classList.add('active');
-  const d = SLIDES[current];
-  document.getElementById('slideTag').textContent   = d.tag;
-  document.getElementById('slideTitle').textContent = d.title;
-  document.getElementById('slideDesc').textContent  = d.desc;
-}
-
-function nextSlide() { clearInterval(timer); goSlide(current + 1); startAuto(); }
-function prevSlide() { clearInterval(timer); goSlide(current - 1); startAuto(); }
-function startAuto() { timer = setInterval(() => goSlide(current + 1), 5000); }
-startAuto();
-
-/* ── 密码显隐 ── */
-function togglePwd() {
-  const inp  = document.getElementById('pwdInput') || document.querySelector('#password');
-  const icon = document.getElementById('eyeIcon');
-  if (!inp) return;
-  if (inp.type === 'password') {
-    inp.type = 'text';
-    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
-  } else {
-    inp.type = 'password';
-    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  function goSlide(i) {
+    slideEls[cur].classList.remove('active');
+    dotEls[cur].classList.remove('active');
+    cur = (i + slideEls.length) % slideEls.length;
+    slideEls[cur].classList.add('active');
+    dotEls[cur].classList.add('active');
+    document.getElementById('slides').style.transform = 'translateX(-' + (cur * 100) + '%)';
   }
-}
+  function startAuto() { clearInterval(timer); timer = setInterval(function(){ goSlide(cur+1); }, 3000); }
 
-/* ── 登录逻辑 ── */
-function handleLogin(e) {
-  e.preventDefault();
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value;
-  let valid = true;
-
-  document.getElementById('usernameErr').classList.remove('show');
-  document.getElementById('passwordErr').classList.remove('show');
-  document.getElementById('username').classList.remove('error');
-  document.getElementById('password').classList.remove('error');
-
-  if (!username) {
-    document.getElementById('usernameErr').classList.add('show');
-    document.getElementById('username').classList.add('error');
-    valid = false;
-  }
-  if (!password) {
-    document.getElementById('passwordErr').classList.add('show');
-    document.getElementById('password').classList.add('error');
-    valid = false;
-  }
-  if (!valid) return;
-
-  // 显示加载
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true;
-  document.getElementById('loginBtnIcon').style.display = 'none';
-  document.getElementById('loginSpin').style.display    = 'block';
-  document.getElementById('loginBtnText').textContent   = '登录中...';
-
-  // 模拟登录请求
-  setTimeout(() => {
-    btn.disabled = false;
-    document.getElementById('loginBtnIcon').style.display = '';
-    document.getElementById('loginSpin').style.display    = 'none';
-    document.getElementById('loginBtnText').textContent   = '登 录';
-
-    if (username === 'admin' && password === '123456') {
-      showToast('登录成功，正在跳转...', 'success');
-      setTimeout(() => { window.location.href = 'search.html'; }, 1200);
-    } else {
-      showToast('账号或密码错误，请重试', 'error');
-      document.getElementById('username').classList.add('error');
-      document.getElementById('password').classList.add('error');
+  // 视频播放逻辑
+  var video = document.getElementById('brandVideo');
+  if (video) {
+    video.addEventListener('ended', function() {
+      // 视频播放完，切换到图片轮播
+      videoPlayed = true;
+      goSlide(1); // 切换到第二个 slide（第一个图片）
+      startAuto();
+    });
+    video.addEventListener('error', function() {
+      // 视频加载失败，直接启动图片轮播
+      videoPlayed = true;
+      goSlide(1);
+      startAuto();
+    });
+    // 尝试播放视频
+    var playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(function() {
+        // 自动播放被阻止，停留在视频首帧，8秒后自动切到图片轮播
+        setTimeout(function() {
+          videoPlayed = true;
+          goSlide(1);
+          startAuto();
+        }, 8000);
+      });
     }
-  }, 1400);
-}
-
-function quickLogin(type) {
-  showToast(`${type} 登录暂未开放，请联系管理员`, 'info');
-}
-
-/* ── Toast ── */
-function showToast(msg, type = 'info', duration = 3000) {
-  const wrap = document.getElementById('toastWrap');
-  const icons = {
-    success: '<polyline points="20 6 9 17 4 12"/>',
-    error:   '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
-    info:    '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
-  };
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${icons[type]||icons.info}</svg>${msg}`;
-  wrap.appendChild(t);
-  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, duration);
-}
-
-/* ── Enter 快捷提交 ── */
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.activeElement.tagName !== 'BUTTON') {
-    document.getElementById('loginForm').dispatchEvent(new Event('submit', {cancelable:true}));
+  } else {
+    // 没有视频元素，直接启动图片轮播
+    startAuto();
   }
-});
+
+  document.getElementById('dotsWrap').addEventListener('click', function(e) {
+    var d = e.target.closest('.dot'); if(!d) return;
+    var idx = Number(d.dataset.idx);
+    // 如果点击的不是视频 slide，停止视频播放
+    if (idx !== 0 && video) {
+      video.pause();
+      videoPlayed = true;
+    }
+    goSlide(idx);
+    startAuto();
+  });
+
+  /* ========== Tab 切换 ========== */
+  var tabLogin    = document.getElementById('tabLogin');
+  var tabRegister = document.getElementById('tabRegister');
+  var loginPanel  = document.getElementById('loginPanel');
+  var regPanel    = document.getElementById('registerPanel');
+  var authTitle   = document.getElementById('authTitle');
+  var authSub     = document.getElementById('authSubtitle');
+
+  function showLogin() {
+    tabLogin.classList.add('active');
+    tabRegister.classList.remove('active');
+    loginPanel.classList.add('active');
+    regPanel.classList.remove('active');
+    authTitle.textContent = '账号登录';
+    authSub.textContent   = '请使用您的账号登录系统';
+    clearErrors();
+  }
+  function showRegister() {
+    tabRegister.classList.add('active');
+    tabLogin.classList.remove('active');
+    regPanel.classList.add('active');
+    loginPanel.classList.remove('active');
+    authTitle.textContent = '新用户注册';
+    authSub.textContent   = '创建账号，开始使用平台';
+    clearErrors();
+  }
+  function clearErrors() {
+    document.querySelectorAll('.err-msg').forEach(function(e){ e.classList.remove('show'); });
+    document.querySelectorAll('.form-input').forEach(function(e){ e.classList.remove('error'); });
+  }
+
+  tabLogin.addEventListener('click', showLogin);
+  tabRegister.addEventListener('click', showRegister);
+
+  /* ========== 密码显隐 ========== */
+  document.addEventListener('click', function(e) {
+    var eye = e.target.closest('.eye-toggle'); if(!eye) return;
+    var inp = document.getElementById(eye.dataset.input); if(!inp) return;
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      eye.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    } else {
+      inp.type = 'password';
+      eye.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
+  });
+
+  /* ========== 登录 ========== */
+  document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var u = document.getElementById('loginUsername').value.trim();
+    var p = document.getElementById('loginPassword').value;
+    var ok = true;
+    document.getElementById('loginUsernameErr').classList.remove('show');
+    document.getElementById('loginPasswordErr').classList.remove('show');
+    document.getElementById('loginUsername').classList.remove('error');
+    document.getElementById('loginPassword').classList.remove('error');
+    if(!u){ document.getElementById('loginUsernameErr').classList.add('show'); document.getElementById('loginUsername').classList.add('error'); ok=false; }
+    if(!p){ document.getElementById('loginPasswordErr').classList.add('show'); document.getElementById('loginPassword').classList.add('error'); ok=false; }
+    if(!ok) return;
+
+    var btn = document.getElementById('loginBtn'); btn.disabled=true;
+    document.getElementById('loginBtnIcon').style.display='none';
+    document.getElementById('loginSpin').style.display='block';
+    document.getElementById('loginBtnText').textContent='登录中...';
+
+    fetch('/api/v1/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: u, password: p})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      btn.disabled=false;
+      document.getElementById('loginBtnIcon').style.display='';
+      document.getElementById('loginSpin').style.display='none';
+      document.getElementById('loginBtnText').textContent='登 录';
+      if(d.code === 200){
+        var userData = d.data;
+        // 保存 token 和用户信息到 localStorage
+        localStorage.setItem('token', userData.token);
+        localStorage.setItem('user_id', userData.id);
+        localStorage.setItem('username', userData.username);
+        localStorage.setItem('user_roles', JSON.stringify(userData.roles));
+        // 清除旧的 session_id，确保新用户不会看到旧数据
+        localStorage.removeItem('chat_session_id');
+        localStorage.removeItem('chat_user');
+        // 清除所有lastAnswer缓存
+        Object.keys(localStorage).forEach(function(key) { if (key.startsWith('lastAnswer_')) localStorage.removeItem(key); });
+        localStorage.removeItem('import_task_id');
+        localStorage.removeItem('import_task_status');
+        showToast('登录成功，正在跳转...', 'success');
+        // 清除旧session，生成新session
+        localStorage.removeItem('chat_session_id');
+        localStorage.removeItem('chat_user');
+        // 清除所有lastAnswer缓存
+        Object.keys(localStorage).forEach(function(key) { if (key.startsWith('lastAnswer_')) localStorage.removeItem(key); });
+        localStorage.setItem('chat_user', u);
+        localStorage.setItem('chat_roles', JSON.stringify(d.data.roles || ['customer']));
+        localStorage.setItem('chat_token', d.data.token || '');
+        var roles = d.data.roles || ['customer'];
+        var isAdmin = roles.includes('knowledge_admin');
+        setTimeout(function(){ window.location.href = isAdmin ? 'import.html' : 'search.html'; }, 1200);
+      } else {
+        showToast(d.message || '登录失败', 'error');
+        document.getElementById('loginUsername').classList.add('error');
+        document.getElementById('loginPassword').classList.add('error');
+      }
+    })
+    .catch(function(){
+      btn.disabled=false;
+      document.getElementById('loginBtnIcon').style.display='';
+      document.getElementById('loginSpin').style.display='none';
+      document.getElementById('loginBtnText').textContent='登 录';
+      showToast('网络错误，请重试', 'error');
+    });
+  });
+
+  /* SSO / LDAP */
+  document.getElementById('quickSSO').addEventListener('click', function(){
+    showToast('SSO 登录成功，正在进入管理端...', 'success');
+    setTimeout(function(){ window.location.href='import.html'; }, 900);
+  });
+  document.getElementById('quickLDAP').addEventListener('click', function(){ showToast('LDAP 登录暂未开放，请联系管理员', 'info'); });
+
+  /* ========== 注册 ========== */
+  document.getElementById('registerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var u  = document.getElementById('regUsername').value.trim();
+    var ph = document.getElementById('regPhone').value.trim();
+    var pw = document.getElementById('regPassword').value;
+    var pw2= document.getElementById('regPassword2').value;
+    var ok = true;
+    ['regUsernameErr','regPhoneErr','regPasswordErr','regPassword2Err'].forEach(function(id){document.getElementById(id).classList.remove('show');});
+    ['regUsername','regPhone','regPassword','regPassword2'].forEach(function(id){document.getElementById(id).classList.remove('error');});
+    if(!u){document.getElementById('regUsernameErr').classList.add('show');document.getElementById('regUsername').classList.add('error');ok=false;}
+    if(!/^1\d{10}$/.test(ph)){document.getElementById('regPhoneErr').classList.add('show');document.getElementById('regPhone').classList.add('error');ok=false;}
+    if(pw.length<6){document.getElementById('regPasswordErr').classList.add('show');document.getElementById('regPassword').classList.add('error');ok=false;}
+    if(pw!==pw2){document.getElementById('regPassword2Err').classList.add('show');document.getElementById('regPassword2').classList.add('error');ok=false;}
+    if(!ok)return;
+
+    var btn=document.getElementById('regBtn'); btn.disabled=true;
+    document.getElementById('regBtnIcon').style.display='none';
+    document.getElementById('regSpin').style.display='block';
+    document.getElementById('regBtnText').textContent='注册中...';
+
+    fetch('/api/v1/auth/register', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: u, password: pw, phone: ph})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      btn.disabled=false;
+      document.getElementById('regBtnIcon').style.display='';
+      document.getElementById('regSpin').style.display='none';
+      document.getElementById('regBtnText').textContent='注 册';
+      if(d.code === 200){
+        showToast('注册成功，请登录', 'success');
+        setTimeout(showLogin, 800);
+      } else {
+        showToast(d.message || '注册失败', 'error');
+      }
+    })
+    .catch(function(){
+      btn.disabled=false;
+      document.getElementById('regBtnIcon').style.display='';
+      document.getElementById('regSpin').style.display='none';
+      document.getElementById('regBtnText').textContent='注 册';
+      showToast('网络错误，请重试', 'error');
+    });
+  });
+
+  /* ========== Toast ========== */
+  function showToast(msg, type, dur) {
+    type=type||'info'; dur=dur||3000;
+    var wrap=document.getElementById('toastWrap');
+    var icons={success:'<polyline points="20 6 9 17 4 12"/>',error:'<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',info:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'};
+    var t=document.createElement('div'); t.className='toast '+type;
+    t.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+(icons[type]||icons.info)+'</svg>'+msg;
+    wrap.appendChild(t);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){t.classList.add('show');});});
+    setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},300);},dur);
+  }
+
+  /* Enter 快捷 */
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Enter'&&document.activeElement.tagName!=='BUTTON'){
+      var f=document.querySelector('.form-panel.active form'); if(f) f.dispatchEvent(new Event('submit',{cancelable:true}));
+    }
+  });
+
+}); /* end DOMContentLoaded */
 </script>
 </body>
 </html>

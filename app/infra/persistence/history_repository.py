@@ -1,6 +1,7 @@
 from app.shared.clients.mongo_history_utils import (
     clear_history,
     get_recent_messages,
+    get_sessions_list,
     save_chat_message,
     update_message_item_names,
 )
@@ -33,6 +34,9 @@ class HistoryRepository:
 
     def clear_session(self, session_id: str) -> int:
         return clear_history(session_id)
+
+    def list_sessions(self, limit: int = 20) -> list[dict]:
+        return get_sessions_list(limit=limit)
 
     def update_item_names(self, ids: list[str], item_names: list[str]) -> int:
         return update_message_item_names(ids, item_names)

@@ -216,6 +216,43 @@ def get_recent_messages(session_id: str, limit: int = 10) -> list[dict[str, Any]
         return []
 
 
+def get_sessions_list(limit: int = 20) -> list[dict[str, Any]]:
+    """
+    获取所有会话列表（按最近活跃时间倒序）。
+    每个会话返回 session_id、最新一条消息摘要、消息数量、最后活跃时间。
+    :param limit: 最多返回多少个会话
+    :return: 会话列表
+    """
+    mongo_tool = get_history_mongo_tool()
+    try:
+        pipeline = [
+            {"$sort": {"ts": -1}},
+            {"$group": {
+                "_id": "$session_id",
+                "last_message": {"$first": "$text"},
+                "last_role": {"$first": "$role"},
+                "last_ts": {"$first": "$ts"},
+                "message_count": {"$sum": 1},
+            }},
+            {"$sort": {"last_ts": -1}},
+            {"$limit": limit},
+        ]
+        results = list(mongo_tool.chat_message.aggregate(pipeline))
+        sessions = []
+        for r in results:
+            last_msg = (r.get("last_message") or "")[:30]
+            sessions.append({
+                "session_id": r["_id"],
+                "title": last_msg or "新会话",
+                "message_count": r.get("message_count", 0),
+                "last_ts": r.get("last_ts", 0),
+            })
+        return sessions
+    except Exception as e:
+        logger.error(f"Error getting sessions list: {e}")
+        return []
+
+
 # 主程序入口：仅当直接运行该脚本时执行，用于简单的功能测试
 if __name__ == "__main__":
     # 简单测试代码：验证数据库的写入和查询功能是否正常

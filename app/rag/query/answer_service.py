@@ -145,22 +145,65 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
     # 1. 检查是否已有 answer（追问或拒绝回答）
     has_answer = check_state_had_answer(state)
     
-    # 2. 如果没有 answer，才调用模型生成
+    # 2. 检查是否跳过检索（闲聊/投诉）
+    skip_retrieval = state.get('skip_retrieval', False)
+    
+    # 3. 如果没有 answer，才调用模型生成
     if not has_answer:
-        # 3. 校验参数
-        reranked_docs, item_names, rewritten_query = validate_answer_state(state)
-        
-        # 4. 构建提示词（使用 prompt_builder）
-        prompt_text = build_prompt(state)
-        
-        # 5. 调用 LLM 生成答案
-        call_llm_generate(prompt_text, state)
-        
-        # 6. 提取图片 URL
-        extract_image_urls(reranked_docs, state)
+        if skip_retrieval:
+            # 闲聊/投诉：直接用LLM生成友好回复，不走检索
+            logger.info("[answer] 闲聊/投诉模式，直接生成回复")
+            original_query = state.get('original_query', '')
+            chitchat_prompt = f"""你是比亚迪汽车售后知识助手。用户说了一句非业务相关的话，请友好回复。
+
+用户说：{original_query}
+
+要求：
+1. 简短友好，不超过2句话
+2. 引导用户提出业务相关问题
+3. 不要说"根据参考内容"之类的话
+
+请回复："""
+            call_llm_generate(chitchat_prompt, state)
+        else:
+            # 正常流程：校验参数 → 构建提示词 → 生成答案
+            reranked_docs, item_names, rewritten_query = validate_answer_state(state)
+            prompt_text = build_prompt(state)
+            call_llm_generate(prompt_text, state)
+            extract_image_urls(reranked_docs, state)
     
     # 7. 保存历史记录
     save_history_message(state)
     
     # 8. 返回 state
+    return state
+
+
+def save_qa_records(state: QueryGraphState) -> QueryGraphState:
+    """保存QA记录到MongoDB"""
+    from app.infra.persistence.qa_repository import qa_repository
+    
+    session_id = state.get("session_id")
+    original_query = state.get("original_query", "")
+    answer = state.get("answer", "")
+    citations = state.get("citations", [])
+    entities = state.get("extracted_entities", {})
+    
+    try:
+        qa_repository.save_session({
+            "_id": session_id,
+            "session_id": session_id,
+            "query": original_query,
+        })
+        qa_repository.save_message({
+            "session_id": session_id,
+            "query": original_query,
+            "answer": answer,
+            "citations": citations,
+            "entities": entities,
+        })
+        logger.info(f"[save_qa] QA记录保存成功: session={session_id}")
+    except Exception as e:
+        logger.error(f"[save_qa] QA记录保存失败: {e}")
+    
     return state
