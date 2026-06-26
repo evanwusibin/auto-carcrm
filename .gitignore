@@ -173,3 +173,16 @@ output/
 # mermaid 校验/解析中间产物
 .mermaid_check/
 .mermaid_extracts/__parse_report.json
+
+# === local secrets / backups ===
+.env.*
+!.env.example
+*.bak
+*.bak_*
+
+# === local runtime outputs ===
+logs/
+.pytest_cache/
+
+# === local generated artifacts ===
+output/
