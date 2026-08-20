@@ -27,8 +27,18 @@ def get_data_and_validate(state):
         + len(case_chunks)
     )
     if total == 0:
-        logger.error("所有召回路结果均为空，无法继续 RRF 融合")
-        raise ValueError("所有召回路结果均为空，无法继续 RRF 融合")
+        logger.warning("所有召回路结果均为空，降级走联网搜索")
+        state["rrf_chunks"] = []
+        state["reranked_docs"] = []
+        state["need_web_search"] = True
+        state["skip_retrieval"] = True
+        return {
+            "embedding_chunks": [],
+            "hyde_embedding_chunks": [],
+            "keyword_chunks": [],
+            "structured_chunks": [],
+            "case_chunks": [],
+        }
 
     return {
         "embedding_chunks": embedding_chunks,
@@ -85,6 +95,13 @@ def fuse_by_rrf(state: QueryGraphState) -> QueryGraphState:
 
     non_empty_routes = [(w, chunks) for w, chunks in weighted_routes if chunks]
     logger.info(f"[RRF] 参与融合的召回路数: {len(non_empty_routes)}/{len(weighted_routes)}")
+    
+    if not non_empty_routes:
+        logger.warning("[RRF] 所有召回路为空，跳过融合，走联网兜底")
+        state["rrf_chunks"] = []
+        state["reranked_docs"] = []
+        state["skip_retrieval"] = True
+        return state
     for i, (w, chunks) in enumerate(non_empty_routes):
         logger.info(f"[RRF] 路径 {i}: 权重={w}, 候选数={len(chunks)}")
 

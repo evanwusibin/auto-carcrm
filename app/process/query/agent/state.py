@@ -39,6 +39,7 @@ class QueryGraphState(TypedDict):
     item_names: List[str]
     candidate_item_names: List[str]
     history: list
+    need_web_search: bool  # 标记是否需要网络搜索（未识别到车型时）
 
 
 query_graph_default_state: QueryGraphState = {
@@ -72,6 +73,7 @@ query_graph_default_state: QueryGraphState = {
     "item_names": [],
     "candidate_item_names": [],
     "history": [],
+    "need_web_search": False,
 }
 
 

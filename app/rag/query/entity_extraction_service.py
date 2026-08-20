@@ -5,6 +5,7 @@
 参考老师 answer_service.py 的代码风格
 """
 import json
+import re
 from langchain_core.messages import HumanMessage
 
 from app.infra.llm.providers import llm_provider
@@ -59,9 +60,11 @@ def extract_entities(state: QueryGraphState) -> QueryGraphState:
     response = llm_client.invoke(messages)
     result_text = response.content.strip()
     
-    # 6. 解析 JSON 结果
+    # 6. 解析 JSON 结果（支持剥离<think>思维链标签）
     try:
-        entities = json.loads(result_text)
+        # 剥离<think>...</think>标签及其内容
+        cleaned_text = re.sub(r'<think>.*?</think>', '', result_text, flags=re.DOTALL).strip()
+        entities = json.loads(cleaned_text)
     except json.JSONDecodeError:
         logger.warning(f"实体抽取结果解析失败：{result_text}")
         entities = {}

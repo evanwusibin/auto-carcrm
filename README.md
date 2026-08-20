@@ -299,6 +299,29 @@ app/resources/html/chat.html
 
 通过 OpenAI 兼容接口抽象 LLM Provider，既能接云端模型，也能接 `crm-finetune` 部署的本地 Qwen3-CRM 模型。
 
+### 6. Hybrid 融合与碎片润色（新增 2026-08-20）
+
+`crm-finetune` 的 `serve_hybrid.py @8101` 已集成 `step-3.7-flash`（1.39s）自动润色：当域内模型返回 `共X页/申请编号/乱码` 等碎片时，自动改写为自然客服口语。
+
+```env
+# .env 快（~10s）
+OPENAI_BASE_URL=http://localhost:8100/v1
+LLM_DEFAULT_MODEL=qwen3-crm
+# .env 准+润色（~80s，推荐）
+OPENAI_BASE_URL=http://localhost:8101/v1
+LLM_DEFAULT_MODEL=qwen3-crm-hybrid
+```
+
+---
+
+## 近期修复（2026-08-20）
+
+- **RRF 空召回熔断**：`rrf_service.py` 所有召回路为空时不再抛 `ValueError`，降级走联网兜底。
+- **主体识别兜底**：`item_name_confirm_service.py` 对 LLM 返回 `int/非dict` 增加 `isinstance` 校验，`LLM 超时/非JSON` 走无主体联网。
+- **超时放宽**：`lm_utils.py` `ChatOpenAI(timeout=180)`，适配 `8101` 融合 `~20s/次 × 5次调用`。
+- **Milvus 端口冲突**：`docker-compose.milvus.yml` `minio 9000→19000`，避免与 `contract-review-minio` 冲突。
+- **MINIO_ENDPOINT**：`.env` 改为 `localhost:19000`。
+
 ---
 
 ## 项目边界

@@ -1,11 +1,65 @@
+﻿import json
+import re
+
 from langchain_core.messages import HumanMessage
+from langchain_core.exceptions import OutputParserException
 from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.outputs import Generation
 from app.infra.llm.providers import llm_provider
 from app.infra.persistence.history_repository import history_repository
 from app.infra.vectorstore.milvus_gateway import milvus_gateway
 from app.process.query.agent.state import QueryGraphState
 from app.shared.runtime.load_prompt import load_prompt
 from app.shared.runtime.logger import logger
+
+
+class ThinkTagJsonOutputParser(JsonOutputParser):
+    """
+    自定义JSON解析器：支持剥离<think>思维链标签后解析JSON
+    适配DeepSeek-R1、Qwen3等带思维链输出的模型
+    """
+
+    @staticmethod
+    def _strip_think_tags(text: str) -> str:
+        """剥离思维链内容，并尽量保留可解析的 JSON 对象。"""
+        logger.debug(f"[ThinkTagJsonOutputParser] 原始文本长度: {len(text)}")
+
+        json_match = re.search(r'\{[\s\S]*\}', text)
+        if json_match:
+            result = json_match.group(0).strip()
+            logger.debug(f"[ThinkTagJsonOutputParser] JSON提取成功，长度: {len(result)}")
+            return result
+
+        pattern = r'<think>[\s\S]*?</think>'
+        cleaned = re.sub(pattern, '', text).strip()
+        if cleaned and '<think>' not in cleaned:
+            logger.debug(f"[ThinkTagJsonOutputParser] 正则匹配成功，清理后长度: {len(cleaned)}")
+            return cleaned
+
+        think_end = text.find('</think>')
+        if think_end != -1:
+            after_think = text[think_end + len('</think>'):].strip()
+            if after_think:
+                logger.debug(f"[ThinkTagJsonOutputParser] 手动提取成功，长度: {len(after_think)}")
+                return after_think
+
+        logger.warning("[ThinkTagJsonOutputParser] 无法从模型输出中提取JSON")
+        return ""
+    def parse_result(self, result: list, **kwargs) -> dict:
+        """重写parse_result，在解析前剥离<think>标签"""
+        # 获取原始文本
+        text = result[0].text
+        # 剥离<think>标签
+        cleaned_text = self._strip_think_tags(text)
+        # 创建新的Generation对象
+        from langchain_core.outputs import Generation
+        new_result = [Generation(text=cleaned_text)]
+        return super().parse_result(new_result, **kwargs)
+
+    def parse(self, text: str) -> dict:
+        """重写parse方法，先剥离<think>标签再解析JSON"""
+        cleaned_text = self._strip_think_tags(text)
+        return super().parse(cleaned_text)
 
 
 # 1、获取参数和校验  state   original_query   session_id
@@ -82,16 +136,29 @@ def call_llm_deal_data(history_text:str,original_query:str)->dict:
             content=prompt_text,
         )
     ]
-    # 3、构建调用链
-    chain = json_llm_client | JsonOutputParser()
+    # 3、构建调用链（使用自定义解析器支持思维链标签）
+    chain = json_llm_client | ThinkTagJsonOutputParser()
     # 4、执行获取结果
     # { item_names :[] ,rewritten_query: 重写问题}
-    result_dict = chain.invoke(messages)
-    # 5、校验结果
+    try:
+        result_dict = chain.invoke(messages)
+    except OutputParserException as e:
+        logger.warning(f"主体识别LLM输出不是合法JSON，走无主体联网搜索兜底: {e}")
+        result_dict = {"item_names": [], "rewritten_query": original_query}
+    except Exception as e:
+        logger.warning(f"主体识别LLM调用失败，走无主体联网搜索兜底: {e}")
+        result_dict = {"item_names": [], "rewritten_query": original_query}
+    # 5、校验结果：LLM 可能返回非 dict（如 int 1），需兜底
+    if not isinstance(result_dict, dict):
+        logger.warning(f"主体识别返回非 dict 类型 {type(result_dict)}: {result_dict}，走无主体兜底")
+        return {"item_names": [], "rewritten_query": original_query}
     if "item_names" not in result_dict:
         result_dict["item_names"] = []
     if "rewritten_query" not in result_dict:
         result_dict["rewritten_query"] = original_query
+    # 兼容 item_names 非 list 的情况
+    if not isinstance(result_dict["item_names"], list):
+        result_dict["item_names"] = []
     # 6、返回结果
     return result_dict
 
@@ -224,7 +291,9 @@ def change_state_status(state: QueryGraphState, item_name_dict, rewritten_query:
         return
 
     state['rewritten_query'] = rewritten_query
-    state['answer'] = "没有识别到相关的知识主体。请确认是否已上传对应资料，或尝试更具体地描述您要查询的内容。"
+    # 标记需要网络搜索，而不是直接返回无匹配提示
+    state['need_web_search'] = True
+    state['item_names'] = []
 
 
 # 8、保存聊天记录
@@ -273,10 +342,12 @@ def confirm_item_name(state: QueryGraphState) -> QueryGraphState:
         # 7. 获取确认和可选地列表  dict{确认:[0.7 + ] 可选:[ 0.6 - 0.7 ]}
         item_name_dict = select_item_names(milvus_result_dict)
     else:
-        # 兜底：LLM未识别时，用原始query直接搜Milvus
-        logger.info(f"[兜底] LLM未识别item_name，用original_query搜索: {original_query}")
-        milvus_result_dict = query_item_name_milvus([original_query])
-        item_name_dict = select_item_names(milvus_result_dict)
+        # LLM未识别到主体，说明用户问题可能与业务无关，直接返回空结果
+        logger.info(f"LLM未识别到item_name，用户问题可能与业务无关: {original_query}")
+        item_name_dict = {
+            "confirmed_item_name_list": [],
+            "options_item_name_list": []
+        }
     # 最后返回 确认列表, 可选列表, rewritten_query   修改state状态
     change_state_status(state,item_name_dict,result_dict['rewritten_query'])
     # 保存本地问题的聊天记录

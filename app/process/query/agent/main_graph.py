@@ -60,10 +60,32 @@ def node_item_name_confirm_after(state: QueryGraphState):
     if state.get('answer'):
         logger.info(f"本次没有明确的item_name,提前结束，待用户确定！{state.get('answer')}")
         return "node_answer_output"
+    elif state.get('need_web_search'):
+        logger.info(f"未识别到车型，需要网络搜索：{state.get('original_query')}")
+        return "node_web_search_only"
     else:
         logger.info(f"有明确的item_name:{state.get('item_names')} 业务继续继续即可！！")
         return "node_intent_recognition"
 
+
+# 新增：仅网络搜索节点（用于通用问题）
+def node_web_search_only(state: QueryGraphState) -> QueryGraphState:
+    """当未识别到车型时，直接进行网络搜索"""
+    from app.rag.query.web_search_service import search_by_web
+    state = search_by_web(state)
+    # 设置标记，让答案生成节点知道这是纯网络搜索结果
+    state['skip_retrieval'] = True
+    state['embedding_chunks'] = []
+    state['hyde_embedding_chunks'] = []
+    state['keyword_chunks'] = []
+    state['structured_chunks'] = []
+    state['case_chunks'] = []
+    state['rrf_chunks'] = []
+    state['reranked_docs'] = []
+    return state
+
+
+query_graph_builder.add_node("node_web_search_only", node_web_search_only)
 
 query_graph_builder.add_conditional_edges(
     "node_item_name_confirm",
@@ -71,8 +93,12 @@ query_graph_builder.add_conditional_edges(
     {
         "node_answer_output": "node_answer_output",
         "node_intent_recognition": "node_intent_recognition",
+        "node_web_search_only": "node_web_search_only",
     }
 )
+
+# 网络搜索后直接到答案生成
+query_graph_builder.add_edge("node_web_search_only", "node_answer_output")
 
 # 意图识别后的条件边：闲聊/投诉直接跳到答案生成，不走检索
 def node_intent_recognition_after(state: QueryGraphState):

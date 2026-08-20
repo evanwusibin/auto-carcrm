@@ -64,6 +64,7 @@ def get_llm_client(model: str | None = None, json_mode: bool = False) -> ChatOpe
             api_key=lm_config.api_key,  # API密钥
             base_url=lm_config.base_url,  # API基础地址（适配任意 OpenAI 兼容代理地址）
             model_kwargs=model_kwargs,  # OpenAI通用参数
+            timeout=180,  # 180秒超时，适配8101融合（域内+联网+润色约20秒/次，5次调用≈100秒）
         )
     except LangChainException as e:
         raise Exception(f"[LLM客户端] 模型【{target_model}】初始化失败（LangChain层）：{str(e)}") from e

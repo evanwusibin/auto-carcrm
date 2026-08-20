@@ -89,6 +89,29 @@ def call_llm_generate(prompt_text, state):
     state["answer"] = final_answer
 
 
+def build_web_search_context(web_search_docs: list) -> str:
+    """将网络搜索结果拼成上下文字符串"""
+    if not web_search_docs:
+        return "暂无网络搜索结果。"
+
+    parts = []
+    total_chars = 0
+    max_chars = 4000  # 网络搜索结果限制字符数
+
+    for i, doc in enumerate(web_search_docs[:5], start=1):  # 最多取5条
+        title = doc.get("title", "")
+        content = doc.get("content", "") or doc.get("snippet", "")
+        url = doc.get("url", "")
+        source_tag = f"[来源: {url}]" if url else ""
+        part = f"【结果{i}】{source_tag} {title}\n{content}".strip()
+        if total_chars + len(part) > max_chars:
+            break
+        parts.append(part)
+        total_chars += len(part)
+
+    return "\n\n".join(parts) if parts else "暂无网络搜索结果。"
+
+
 def extract_image_urls(reranked_docs, state):
     """
     从引用文档中提取图片 URL
@@ -151,10 +174,33 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
     # 3. 如果没有 answer，才调用模型生成
     if not has_answer:
         if skip_retrieval:
-            # 闲聊/投诉：直接用LLM生成友好回复，不走检索
-            logger.info("[answer] 闲聊/投诉模式，直接生成回复")
-            original_query = state.get('original_query', '')
-            chitchat_prompt = f"""你是比亚迪汽车售后知识助手。用户说了一句非业务相关的话，请友好回复。
+            # 检查是否有网络搜索结果
+            web_search_docs = state.get('web_search_docs', [])
+            if web_search_docs:
+                # 有网络搜索结果：基于搜索结果生成答案
+                logger.info(f"[answer] 网络搜索模式，搜索结果数量: {len(web_search_docs)}")
+                original_query = state.get('original_query', '')
+                context = build_web_search_context(web_search_docs)
+                web_prompt = f"""你是一个智能助手。根据以下网络搜索结果，回答用户的问题。
+
+网络搜索结果：
+{context}
+
+用户问题：{original_query}
+
+要求：
+1. 基于搜索结果提供准确、有用的回答
+2. 如果搜索结果中没有相关信息，坦诚告知
+3. 回答要简洁明了，不要太长
+4. 不要说"根据参考内容"，直接回答即可
+
+请回复："""
+                call_llm_generate(web_prompt, state)
+            else:
+                # 闲聊/投诉：直接用LLM生成友好回复，不走检索
+                logger.info("[answer] 闲聊/投诉模式，直接生成回复")
+                original_query = state.get('original_query', '')
+                chitchat_prompt = f"""你是比亚迪汽车售后知识助手。用户说了一句非业务相关的话，请友好回复。
 
 用户说：{original_query}
 
@@ -164,7 +210,7 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
 3. 不要说"根据参考内容"之类的话
 
 请回复："""
-            call_llm_generate(chitchat_prompt, state)
+                call_llm_generate(chitchat_prompt, state)
         else:
             # 正常流程：校验参数 → 构建提示词 → 生成答案
             reranked_docs, item_names, rewritten_query = validate_answer_state(state)
